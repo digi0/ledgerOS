@@ -1,6 +1,6 @@
 /* Quick deterministic check: feed representative Indian document text and
    assert the classifier + extractors behave. Run: npm test (uses tsx). */
-import { parseText } from "../src/index";
+import { parseText } from "../src/lib/parser/index";
 
 const SAMPLES: { name: string; text: string; expect: string }[] = [
   {

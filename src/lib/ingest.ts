@@ -8,8 +8,8 @@
  */
 
 import { revalidatePath } from "next/cache";
-import { parsePdf } from "accounting-parser";
-import type { DocType } from "accounting-parser";
+import { parsePdf } from "@/lib/parser";
+import type { DocType } from "@/lib/parser";
 import { currentFirmId, serverAdmin, supabaseServer } from "./supabase";
 import { matchClient } from "./matcher";
 import { DEMO_FIRM_ID } from "./constants";
