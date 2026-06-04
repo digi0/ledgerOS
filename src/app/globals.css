@@ -1,0 +1,166 @@
+@import "tailwindcss";
+
+/* ============================================================
+   LedgerOS design system — matches the Precedal reference.
+   Light, professional, Inter. Monochrome slate ink + white cards,
+   with green / amber status accents. One brand color (slate).
+   ============================================================ */
+@theme inline {
+  /* Surfaces */
+  --color-bg: #f7f8fa; /* page background */
+  --color-surface: #ffffff; /* cards */
+  --color-surface-2: #f4f6f9; /* inputs, hover, soft fills */
+  --color-border: #e7eaef;
+  --color-border-strong: #d7dbe3;
+
+  /* Ink / text */
+  --color-ink: #0e1220; /* headings, strongest */
+  --color-fg: #1a2032; /* body */
+  --color-fg-muted: #5d6478; /* secondary */
+  --color-fg-dim: #8b93a3; /* tertiary, meta */
+
+  /* Brand = slate (buttons, logo, active state) */
+  --color-brand: #1e293b;
+  --color-brand-strong: #0f172a;
+  --color-brand-soft: #eef1f5;
+  --color-brand-tint: #f4f6f9;
+
+  /* Status — always paired with text/icon */
+  --color-ok: #0f8a4d;
+  --color-ok-soft: #e3f5ea;
+  --color-warn: #b7791f;
+  --color-warn-soft: #fbeed2;
+  --color-alert: #c2410c;
+  --color-alert-soft: #fce6db;
+  --color-info: #2563eb;
+  --color-info-soft: #e6edfd;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.font-display {
+  letter-spacing: -0.02em;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Tabular figures for money / metrics columns. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+button,
+a {
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    box-shadow 200ms ease,
+    transform 120ms ease;
+}
+
+/* Card: the workhorse surface. */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+}
+
+/* Interactive row (inbox, tables). */
+.row-interactive {
+  cursor: pointer;
+  transition: background-color 130ms ease;
+}
+.row-interactive:hover {
+  background: var(--color-surface-2);
+}
+
+/* Sidebar nav item. */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 9px;
+  padding: 8px 10px;
+  color: var(--color-fg-muted);
+  font-weight: 500;
+}
+.nav-item:hover {
+  background: var(--color-surface-2);
+  color: var(--color-ink);
+}
+.nav-item[data-active="true"] {
+  background: var(--color-surface-2);
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+/* Live activity marquee — content is duplicated, so -50% loops seamlessly. */
+@keyframes ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.animate-ticker {
+  animation: ticker 38s linear infinite;
+}
+.animate-ticker:hover {
+  animation-play-state: paused;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-up {
+  opacity: 0;
+  animation: fade-up 420ms ease-out forwards;
+}
+
+/* Soft scrollbar for the live ticker / scroll areas. */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
