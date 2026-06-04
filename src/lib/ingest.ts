@@ -41,10 +41,10 @@ export async function uploadAndParse(formData: FormData): Promise<UploadResult> 
 
   const bytes = new Uint8Array(await file.arrayBuffer());
 
-  // 1. store the original in the private bucket
+  // 1. store the original in the private bucket (service-role for Storage)
   const safeName = file.name.replace(/[^\w.\-]+/g, "_");
   const path = `${firmId}/${Date.now()}-${safeName}`;
-  const upload = await sb.storage.from("documents").upload(path, bytes, {
+  const upload = await serverAdmin().storage.from("documents").upload(path, bytes, {
     contentType: file.type || "application/pdf",
     upsert: false,
   });

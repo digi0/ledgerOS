@@ -9,9 +9,11 @@ import {
   FileText,
   LayoutGrid,
   Landmark,
+  LogOut,
   Sparkles,
   Users,
 } from "lucide-react";
+import { signOut } from "@/lib/auth-actions";
 
 type Item = {
   href: string;
@@ -20,7 +22,17 @@ type Item = {
   badge?: number;
 };
 
-export default function Sidebar({ documentsBadge = 0 }: { documentsBadge?: number }) {
+export default function Sidebar({
+  documentsBadge = 0,
+  firmName = "Your Firm",
+  clientCount = 0,
+  showSignOut = false,
+}: {
+  documentsBadge?: number;
+  firmName?: string;
+  clientCount?: number;
+  showSignOut?: boolean;
+}) {
   const pathname = usePathname();
 
   const sections: { title: string; items: Item[] }[] = [
@@ -101,14 +113,25 @@ export default function Sidebar({ documentsBadge = 0 }: { documentsBadge?: numbe
       {/* firm card */}
       <div className="flex items-center gap-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-2.5">
         <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[9px] bg-[var(--color-brand)] text-sm font-semibold text-white">
-          S
+          {firmName.charAt(0).toUpperCase()}
         </span>
-        <div className="min-w-0 leading-tight">
-          <p className="truncate text-[13px] font-semibold text-[var(--color-ink)]">
-            Sharma &amp; Associates
+        <div className="min-w-0 flex-1 leading-tight">
+          <p className="truncate text-[13px] font-semibold text-[var(--color-ink)]">{firmName}</p>
+          <p className="truncate text-[11px] text-[var(--color-fg-dim)]">
+            CA · {clientCount} active client{clientCount === 1 ? "" : "s"}
           </p>
-          <p className="truncate text-[11px] text-[var(--color-fg-dim)]">CA · 4 active clients</p>
         </div>
+        {showSignOut && (
+          <form action={signOut}>
+            <button
+              type="submit"
+              aria-label="Sign out"
+              className="grid h-7 w-7 place-items-center rounded-lg text-[var(--color-fg-dim)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-ink)]"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </form>
+        )}
       </div>
     </aside>
   );

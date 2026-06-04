@@ -95,6 +95,41 @@ export async function inboxCounts(): Promise<Record<HandlingStatus, number>> {
   return zero;
 }
 
+export interface MeContext {
+  fullName: string;
+  firstName: string;
+  firmName: string;
+  authed: boolean;
+}
+
+/** The signed-in user + their firm (or demo defaults when auth is off). */
+export async function getMe(): Promise<MeContext> {
+  const demo: MeContext = {
+    fullName: "Eshan Sharma",
+    firstName: "Eshan",
+    firmName: "Sharma & Associates",
+    authed: false,
+  };
+  if (process.env.NEXT_PUBLIC_AUTH_ENABLED !== "true") return demo;
+
+  const sb = await supabaseServer();
+  const {
+    data: { user },
+  } = await sb.auth.getUser();
+  if (!user) return { fullName: "", firstName: "", firmName: "", authed: false };
+
+  const { data } = await sb
+    .from("profiles")
+    .select("full_name, firm:firm_id (name)")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const fullName = (data?.full_name as string) || user.email || "Member";
+  const firm = data?.firm as { name?: string } | { name?: string }[] | null;
+  const firmName = (Array.isArray(firm) ? firm[0]?.name : firm?.name) ?? "Your Firm";
+  return { fullName, firstName: fullName.split(/\s+/)[0] || fullName, firmName, authed: true };
+}
+
 /** The firm's clients, for the filter dropdown + reassign control. */
 export async function listClients(): Promise<Pick<Client, "id" | "name" | "gstin">[]> {
   if (!isSupabaseConfigured()) return [];
@@ -113,7 +148,9 @@ export async function listClients(): Promise<Pick<Client, "id" | "name" | "gstin
  */
 export async function getSignedUrl(storagePath: string): Promise<string | null> {
   if (!isSupabaseConfigured() || !storagePath) return null;
-  const sb = await readClient();
+  // Storage signing via service-role; callers reach this only for documents
+  // they already loaded through RLS-gated reads.
+  const sb = serverAdmin();
   const { data, error } = await sb.storage.from("documents").createSignedUrl(storagePath, 600);
   if (error) return null;
   return data?.signedUrl ?? null;

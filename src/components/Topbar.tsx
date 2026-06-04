@@ -4,7 +4,7 @@ import { Search } from "lucide-react";
  * Top command-search bar. The search field is presentational for now — it
  * mirrors the reference design; wiring global search lands with the copilot.
  */
-export default function Topbar() {
+export default function Topbar({ userName = "there" }: { userName?: string }) {
   const now = new Date();
   const greeting =
     now.getHours() < 12 ? "Good morning" : now.getHours() < 18 ? "Good afternoon" : "Good evening";
@@ -24,7 +24,7 @@ export default function Topbar() {
           </kbd>
         </div>
         <p className="ml-auto hidden text-[13px] text-[var(--color-fg-muted)] sm:block">
-          {greeting}, <span className="font-semibold text-[var(--color-ink)]">Eshan</span> ·{" "}
+          {greeting}, <span className="font-semibold text-[var(--color-ink)]">{userName}</span> ·{" "}
           {date}
         </p>
       </div>

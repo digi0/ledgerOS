@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Sparkles, TriangleAlert } from "lucide-react";
-import { inboxCounts, listClients, listDocuments } from "@/lib/db";
+import { getMe, inboxCounts, listClients, listDocuments } from "@/lib/db";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { CLASSIFICATION_LABELS } from "@/lib/types";
 import { inr, timeAgo } from "@/lib/fields";
@@ -17,10 +17,11 @@ export default async function Dashboard() {
     );
   }
 
-  const [docs, clients, counts] = await Promise.all([
+  const [docs, clients, counts, me] = await Promise.all([
     listDocuments({ limit: 500 }),
     listClients(),
     inboxCounts(),
+    getMe(),
   ]);
 
   const today = new Date().toISOString().slice(0, 10);
@@ -48,7 +49,7 @@ export default async function Dashboard() {
       {/* welcome */}
       <section className="card flex flex-col gap-6 p-6 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0 flex-1">
-          <h2 className="font-display text-lg">Welcome to LedgerOS, Sharma &amp; Associates.</h2>
+          <h2 className="font-display text-lg">Welcome to LedgerOS, {me.firmName}.</h2>
           <p className="mt-1 max-w-2xl text-[var(--color-fg-muted)]">
             Your workspace is live — wired to your real Supabase data. Three quick ways to see how
             LedgerOS handles your workflow:
