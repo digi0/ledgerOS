@@ -64,6 +64,13 @@ Received with thanks
 Date: 29/05/2026
 Amount: ₹540.00`,
   },
+  {
+    // Anonymized copy of a real GST-portal GSTR-3B download (flattened text,
+    // uncomma'd decimals) — the layout that exposed the invoice misclassification.
+    name: "GSTR-3B filed return",
+    expect: "gst_return",
+    text: `Form GSTR-3B [See rule 61(5)] Year 2026-27 Period April GSTIN of the supplier 06ABCDE1234F1Z5 2(a). Legal name of the registered person SUNITA SHARMA 2(b). Trade name, if any S. K. TRADING CO. 2(c). ARN AA0604261234567 2(d). Date of ARN 21/05/2026 (Amount in ₹ for all tables) 3.1 Details of Outward supplies and inward supplies liable to reverse charge Nature of Supplies Total taxable value Integrated tax Central tax State/UT tax Cess (a) Outward taxable supplies (other than zero rated, nil rated and exempted) 7241290.50 295990.48 505257.67 505257.67 0.00 (b) Outward taxable supplies (zero rated) 0.00 0.00 - - 0.00 4. Eligible ITC Details Integrated tax Central tax State/UT tax Cess A. ITC Available (1) Import of goods 0.00 0.00 0.00 0.00 FILED (5) All other ITC 587868.94 270722.53 270722.53 0.00 C. Net ITC available (A-B) 588029.04 271077.53 271077.53 0.00 6.1 Payment of tax`,
+  },
 ];
 
 let pass = 0;

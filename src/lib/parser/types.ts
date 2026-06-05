@@ -4,6 +4,7 @@ export type DocType =
   | "bank_statement"
   | "tds_certificate"
   | "notice" // GST or Income-Tax notice
+  | "gst_return" // filed GSTR-1 / 3B / 9 portal download
   | "receipt"
   | "unknown";
 

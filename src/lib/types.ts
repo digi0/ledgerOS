@@ -21,6 +21,7 @@ export type DocumentClassification =
   | "invoice"
   | "bank_statement"
   | "notice"
+  | "gst_return"
   | "receipt"
   | "tds_certificate"
   | "other";
@@ -90,6 +91,7 @@ export const CLASSIFICATION_LABELS: Record<DocumentClassification, string> = {
   invoice: "Invoice",
   bank_statement: "Bank Statement",
   notice: "Notice",
+  gst_return: "GST Return",
   receipt: "Receipt",
   tds_certificate: "TDS Certificate",
   other: "Other",

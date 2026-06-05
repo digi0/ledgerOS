@@ -16,6 +16,9 @@ export const noticeProvider: Provider = {
     if (/u\/s\s*\d+|under section/.test(t)) s += 0.15;
     if (/scrutiny|discrepanc|mismatch|demand/.test(t)) s += 0.1;
     if (/\btax invoice\b/.test(t)) s -= 0.4;
+    // "Form GSTR-N … ARN" is a *filed return*, not a notice — notices only
+    // reference GSTR forms ("discrepancy in GSTR-3B"), they don't open with one.
+    if (/\bform\s*gstr\s*-?\s*\d/.test(t) && /date of arn/.test(t)) s -= 0.5;
     return clamp(s);
   },
 

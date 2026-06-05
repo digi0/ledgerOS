@@ -20,6 +20,7 @@ const DOCTYPE_TO_CLASSIFICATION: Record<DocType, DocumentClassification> = {
   bank_statement: "bank_statement",
   tds_certificate: "tds_certificate",
   notice: "notice",
+  gst_return: "gst_return",
   receipt: "receipt",
   unknown: "unknown",
 };

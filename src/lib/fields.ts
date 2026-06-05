@@ -69,6 +69,10 @@ export function keyFields(doc: DocumentRow): KeyField[] {
       push("TDS", inr(f.tds_amount));
       push("Section", asStr(f.section));
       break;
+    case "gst_return":
+      push("Period", asStr(f.period));
+      push("Tax", inr(f.total_tax));
+      break;
     case "receipt":
       push("Total", inr(f.total));
       push("Date", fmtDate(f.date));
@@ -96,6 +100,8 @@ export function classificationBadge(c: DocumentClassification): string {
       return base + "bg-[var(--color-ok-soft)] text-[var(--color-ok)]";
     case "tds_certificate":
       return base + "bg-[var(--color-warn-soft)] text-[var(--color-warn)]";
+    case "gst_return":
+      return base + "bg-[var(--color-ok-soft)] text-[var(--color-ok)]";
     default:
       return base + "bg-[var(--color-surface-2)] text-[var(--color-fg-muted)]";
   }

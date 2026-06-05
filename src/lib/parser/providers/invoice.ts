@@ -24,6 +24,7 @@ export const invoiceProvider: Provider = {
     if (/\b(cgst|sgst|igst)\b/.test(t)) s += 0.2;
     if (/\bhsn\b|\bsac\b/.test(t)) s += 0.1;
     if (/\b(bank statement|form no\.?\s*16|statement of account)\b/.test(t)) s -= 0.5;
+    if (/\bform\s*gstr\s*-?\s*\d/.test(t)) s -= 0.5; // filed GST return, not an invoice
     return clamp(s);
   },
 

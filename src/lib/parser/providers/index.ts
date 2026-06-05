@@ -3,6 +3,7 @@ import { invoiceProvider } from "./invoice";
 import { bankStatementProvider } from "./bank-statement";
 import { tdsCertificateProvider } from "./tds-certificate";
 import { noticeProvider } from "./notice";
+import { gstReturnProvider } from "./gst-return";
 import { receiptProvider } from "./receipt";
 import { genericProvider } from "./generic";
 
@@ -12,6 +13,7 @@ export const providers: Provider[] = [
   bankStatementProvider,
   tdsCertificateProvider,
   noticeProvider,
+  gstReturnProvider,
   receiptProvider,
 ];
 
