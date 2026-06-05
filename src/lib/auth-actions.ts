@@ -1,16 +1,15 @@
 "use server";
 
 /**
- * Supabase Auth — email + password. On signup the user joins the demo firm
- * (Sharma & Associates) so the pilot lands in a populated workspace; real
- * "create your own firm" onboarding is a later step. The profile row links
- * auth.users → firm + role, which is what current_firm_id() (and therefore
- * all firm-scoped RLS) reads.
+ * Supabase Auth — email + password. The profile row (auth user → firm + role,
+ * what current_firm_id() and all firm-scoped RLS read) is created by a DB
+ * trigger on auth.users (migration 0003), so it exists no matter which
+ * confirmation flow the signup took. New users join the demo firm
+ * (Sharma & Associates); real "create your own firm" onboarding is later.
  */
 
 import { redirect } from "next/navigation";
 import { supabaseServer } from "./supabase";
-import { DEMO_FIRM_ID } from "./constants";
 
 export type AuthResult = { error: string } | undefined;
 
@@ -36,24 +35,13 @@ export async function signUp(_prev: AuthResult, formData: FormData): Promise<Aut
   });
   if (error) return { error: error.message };
 
+  // Profile creation happens in the DB trigger — nothing to do here. The old
+  // app-side upsert only ran when signup returned an instant session, which
+  // silently skipped users who signed up while email confirmation was on.
   if (!data.session) {
     return {
-      error:
-        "Account created — check your email to confirm, then sign in. " +
-        "(To allow instant signup, turn off email confirmation in Supabase → Authentication → Sign In / Providers → Email.)",
+      error: "Account created — check your email to confirm, then sign in.",
     };
-  }
-
-  // Attach the new user to the demo firm (pilot). The cookie client now holds
-  // the session, so RLS lets the user write their own profile row.
-  const userId = data.user?.id;
-  if (userId) {
-    await sb
-      .from("profiles")
-      .upsert(
-        { user_id: userId, firm_id: DEMO_FIRM_ID, full_name: fullName, email, role: "member" },
-        { onConflict: "user_id" },
-      );
   }
 
   redirect("/");
