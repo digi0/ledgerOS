@@ -105,9 +105,9 @@ export interface MeContext {
 /** The signed-in user + their firm (or demo defaults when auth is off). */
 export async function getMe(): Promise<MeContext> {
   const demo: MeContext = {
-    fullName: "Eshan Sharma",
-    firstName: "Eshan",
-    firmName: "Sharma & Associates",
+    fullName: "Raghav Malpani",
+    firstName: "Raghav",
+    firmName: "Malpani & Associates",
     authed: false,
   };
   if (process.env.NEXT_PUBLIC_AUTH_ENABLED !== "true") return demo;

@@ -30,6 +30,8 @@ export default async function Dashboard() {
     .filter((d) => d.classification === "notice")
     .reduce((s, d) => s + Number((d.extracted_fields as Record<string, unknown>).amount_disputed ?? 0), 0);
   const recent = docs.slice(0, 7);
+  const unmatched = docs.filter((d) => !d.client_id).length;
+  const returnsOnFile = docs.filter((d) => d.classification === "gst_return").length;
 
   const fullDate = new Date().toLocaleDateString("en-IN", {
     weekday: "long",
@@ -62,8 +64,8 @@ export default async function Dashboard() {
                 title: `Process ${counts.new} documents`,
                 sub: "AI-classified inbox · one click",
               },
-              { href: "/gst", n: 2, title: "Reconcile GST", sub: "mismatches · ITC at risk" },
-              { href: "/income-tax", n: 3, title: "Compare ITR regimes", sub: "savings, visualised" },
+              { href: "/copilot", n: 2, title: "Ask the copilot", sub: "grounded in your documents" },
+              { href: "/clients", n: 3, title: "Add your clients", sub: "uploads auto-match to them" },
             ].map((c) => (
               <Link
                 key={c.n}
@@ -84,9 +86,9 @@ export default async function Dashboard() {
           </div>
         </div>
         <div className="shrink-0 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] px-7 py-5 text-center">
-          <p className="font-display text-3xl text-[var(--color-ink)]">87h</p>
+          <p className="font-display text-3xl text-[var(--color-ink)]">{docs.length}</p>
           <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-fg-dim)]">
-            Saved this month
+            Documents ingested
           </p>
         </div>
       </section>
@@ -117,7 +119,7 @@ export default async function Dashboard() {
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Active Clients" value={String(clients.length)} sub="all onboarded" />
         <Stat label="Docs Processed Today" value={String(processedToday)} sub="live ingestion" ok />
-        <Stat label="Pending Compliance" value="4" sub="Next: GSTR-3B · Apr 20" />
+        <Stat label="Unmatched Documents" value={String(unmatched)} sub="assign a client from the inbox" />
         <Stat label="ITC at Risk" value={inr(itcAtRisk) ?? "₹0"} sub={`${counts.new} new in inbox`} warn />
       </section>
 
@@ -127,32 +129,13 @@ export default async function Dashboard() {
         <div className="card p-5">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="font-display text-[15px]">Upcoming Compliance</h3>
-            <span className="text-[11px] text-[var(--color-fg-dim)]">Next 15 days · View all</span>
+            <span className="text-[11px] text-[var(--color-fg-dim)]">Coming with the compliance module</span>
           </div>
-          <div className="space-y-1">
-            {UPCOMING.map((u) => (
-              <div
-                key={u.title}
-                className="flex items-center gap-3 rounded-lg px-2 py-2.5 hover:bg-[var(--color-surface-2)]"
-              >
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[var(--color-surface-2)] leading-none">
-                  <span className="text-[14px] font-bold text-[var(--color-ink)]">{u.day}</span>
-                  <span className="text-[9px] font-semibold uppercase text-[var(--color-fg-dim)]">
-                    {u.mon}
-                  </span>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13px] font-medium text-[var(--color-ink)]">{u.title}</p>
-                  <p className="truncate text-[11px] text-[var(--color-fg-dim)]">{u.sub}</p>
-                </div>
-                <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${u.cls}`}
-                >
-                  {u.due}
-                </span>
-              </div>
-            ))}
-          </div>
+          <p className="rounded-lg bg-[var(--color-surface-2)] p-4 text-[12px] leading-relaxed text-[var(--color-fg-muted)]">
+            No calendar yet — deadlines will be generated from each client&apos;s GSTIN and
+            filing frequency once the compliance module lands. Until then, due dates parsed
+            from notices appear on the documents themselves.
+          </p>
         </div>
 
         {/* recent activity */}
@@ -265,49 +248,40 @@ export default async function Dashboard() {
       {/* bottom row */}
       <section className="grid gap-4 lg:grid-cols-3">
         <div className="card p-5">
-          <h3 className="font-display text-[15px]">Filings This Quarter</h3>
-          <p className="mt-6 font-display text-3xl text-[var(--color-ink)]">47</p>
+          <h3 className="font-display text-[15px]">Returns on File</h3>
+          <p className="mt-6 font-display text-3xl text-[var(--color-ink)]">{returnsOnFile}</p>
           <p className="mt-1 text-[12px] text-[var(--color-fg-muted)]">
-            Returns filed this quarter · <span className="text-[var(--color-ok)]">100% on time</span>
+            GST returns ingested · parsed from your uploads
           </p>
         </div>
         <div className="card p-5">
           <h3 className="font-display text-[15px]">Revenue Pulse</h3>
-          <p className="mt-3 font-display text-2xl text-[var(--color-ink)] tnum">₹ 3,24,600</p>
-          <p className="text-[12px] text-[var(--color-fg-muted)]">
-            Monthly retainer · <span className="text-[var(--color-ok)]">▲ 12%</span>
+          <p className="mt-3 rounded-lg bg-[var(--color-surface-2)] p-4 text-[12px] leading-relaxed text-[var(--color-fg-muted)]">
+            Not wired yet — revenue tracking arrives with the firm module. Nothing shown here
+            until it&apos;s real.
           </p>
-          <div className="mt-3 space-y-1.5 text-[12px]">
-            {[
-              ["Compliance retainer", "₹ 2,10,000"],
-              ["Advisory", "₹ 80,000"],
-              ["One-off filings", "₹ 34,600"],
-            ].map(([k, v]) => (
-              <div key={k} className="flex justify-between">
-                <span className="text-[var(--color-fg-muted)]">{k}</span>
-                <span className="tnum font-medium text-[var(--color-ink)]">{v}</span>
-              </div>
-            ))}
-          </div>
         </div>
         <div className="card space-y-3 p-5">
-          <h3 className="font-display text-[15px]">AI Insights</h3>
-          <div className="rounded-lg bg-[var(--color-ok-soft)] p-3">
-            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-ok)]">
-              <Sparkles className="h-3 w-3" /> Opportunity
+          <h3 className="font-display text-[15px]">AI Copilot</h3>
+          {counts.new > 0 && (
+            <div className="rounded-lg bg-[var(--color-warn-soft)] p-3">
+              <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-warn)]">
+                <TriangleAlert className="h-3 w-3" /> Attention
+              </p>
+              <p className="mt-1 text-[12px] text-[var(--color-fg)]">
+                {counts.new} document{counts.new > 1 ? "s" : ""} in the inbox awaiting review.
+              </p>
+            </div>
+          )}
+          <Link href="/copilot" className="block rounded-lg bg-[var(--color-brand-soft)] p-3 hover:bg-[var(--color-brand-tint)]">
+            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-brand-strong)]">
+              <Sparkles className="h-3 w-3" /> Ask anything
             </p>
             <p className="mt-1 text-[12px] text-[var(--color-fg)]">
-              Patel Textiles is paying 18% GST on items that may qualify for 12%. Worth a review.
+              The copilot answers from your parsed documents — try &quot;what was the GST
+              liability in April?&quot;
             </p>
-          </div>
-          <div className="rounded-lg bg-[var(--color-warn-soft)] p-3">
-            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-warn)]">
-              <TriangleAlert className="h-3 w-3" /> Attention
-            </p>
-            <p className="mt-1 text-[12px] text-[var(--color-fg)]">
-              {counts.new} documents are unprocessed in the inbox. Run the AI classifier to route them.
-            </p>
-          </div>
+          </Link>
         </div>
       </section>
     </div>
@@ -351,37 +325,3 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
-const UPCOMING = [
-  {
-    day: "20",
-    mon: "Apr",
-    title: "GSTR-3B · Monthly Return",
-    sub: "9 clients · 3 pending reconciliation",
-    due: "2 days",
-    cls: "bg-[var(--color-alert-soft)] text-[var(--color-alert)]",
-  },
-  {
-    day: "30",
-    mon: "Apr",
-    title: "TDS Return · Q4 FY25-26",
-    sub: "Form 24Q & 26Q · 7 deductor clients",
-    due: "12 days",
-    cls: "bg-[var(--color-warn-soft)] text-[var(--color-warn)]",
-  },
-  {
-    day: "11",
-    mon: "May",
-    title: "GSTR-1 · Outward Supplies",
-    sub: "B2B + B2C · auto-draft ready for 8 clients",
-    due: "23 days",
-    cls: "bg-[var(--color-surface-2)] text-[var(--color-fg-muted)]",
-  },
-  {
-    day: "31",
-    mon: "Jul",
-    title: "ITR Filing · AY 2026-27",
-    sub: "Non-audit · 4 clients · AIS fetched",
-    due: "104 days",
-    cls: "bg-[var(--color-ok-soft)] text-[var(--color-ok)]",
-  },
-];

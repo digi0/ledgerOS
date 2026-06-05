@@ -4,8 +4,8 @@
  * Supabase Auth — email + password. The profile row (auth user → firm + role,
  * what current_firm_id() and all firm-scoped RLS read) is created by a DB
  * trigger on auth.users (migration 0003), so it exists no matter which
- * confirmation flow the signup took. New users join the demo firm
- * (Sharma & Associates); real "create your own firm" onboarding is later.
+ * confirmation flow the signup took. New users join the firm
+ * (Malpani & Associates); real "create your own firm" onboarding is later.
  */
 
 import { redirect } from "next/navigation";
