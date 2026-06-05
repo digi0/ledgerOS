@@ -6,15 +6,18 @@ import { Loader2, X } from "lucide-react";
 import { saveClient, type ClientInput } from "@/lib/client-actions";
 
 /**
- * Add/edit client modal — one form for both (pass `client` to edit).
- * GSTIN/PAN are validated server-side; PAN auto-derives from GSTIN.
+ * Add/edit client modal — one form for both (pass `client` with an id to
+ * edit; without one it's an add with prefilled values, e.g. "create client
+ * from this document"). GSTIN/PAN validated server-side; PAN derives from GSTIN.
  */
 export default function ClientDialog({
   client,
   onClose,
+  onSaved,
 }: {
-  client?: ClientInput & { id: string };
+  client?: ClientInput;
   onClose: () => void;
+  onSaved?: (id: string) => void | Promise<void>;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -34,6 +37,7 @@ export default function ClientDialog({
       });
       if (!res.ok) setError(res.error);
       else {
+        await onSaved?.(res.id);
         router.refresh();
         onClose();
       }
@@ -57,7 +61,7 @@ export default function ClientDialog({
         aria-modal="true"
       >
         <div className="flex items-start justify-between">
-          <h2 className="font-display text-lg">{client ? "Edit client" : "Add client"}</h2>
+          <h2 className="font-display text-lg">{client?.id ? "Edit client" : "Add client"}</h2>
           <button
             onClick={onClose}
             aria-label="Close"
@@ -138,7 +142,7 @@ export default function ClientDialog({
               className="inline-flex items-center gap-2 rounded-[10px] bg-[var(--color-brand)] px-3.5 py-2 text-[13px] font-medium text-white hover:bg-[var(--color-brand-strong)] disabled:opacity-60"
             >
               {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-              {client ? "Save changes" : "Add client"}
+              {client?.id ? "Save changes" : "Add client"}
             </button>
           </div>
         </form>

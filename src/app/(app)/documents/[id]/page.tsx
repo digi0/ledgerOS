@@ -7,6 +7,7 @@ import { classificationBadge, fmtDate } from "@/lib/fields";
 import DetailActions from "@/components/DetailActions";
 import DeleteDocument from "@/components/DeleteDocument";
 import FieldEditor from "@/components/FieldEditor";
+import CreateClientFromDoc from "@/components/CreateClientFromDoc";
 
 export default async function DocumentDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -14,6 +15,20 @@ export default async function DocumentDetail({ params }: { params: Promise<{ id:
   if (!doc) notFound();
 
   const signedUrl = await getSignedUrl(doc.storage_path);
+
+  // Unmatched + the parser found an identity → offer one-click client creation.
+  const f = doc.extracted_fields as Record<string, unknown>;
+  const suggestedName = [f.trade_name, f.legal_name, f.vendor_name, f.account_holder].find(
+    (v): v is string => typeof v === "string" && v.trim().length > 1,
+  );
+  const clientSuggestion =
+    !doc.client_id && suggestedName
+      ? {
+          name: suggestedName,
+          gstin: typeof f.gstin === "string" ? f.gstin : undefined,
+          pan: typeof f.pan === "string" ? f.pan : undefined,
+        }
+      : null;
 
   return (
     <div className="fade-up space-y-5">
@@ -75,7 +90,10 @@ export default async function DocumentDetail({ params }: { params: Promise<{ id:
             <h2 className="font-display text-sm uppercase tracking-wide text-[var(--color-fg-dim)]">
               Actions
             </h2>
-            <div className="mt-4">
+            <div className="mt-4 space-y-4">
+              {clientSuggestion && (
+                <CreateClientFromDoc docId={doc.id} suggestion={clientSuggestion} />
+              )}
               <DetailActions
                 id={doc.id}
                 handling={doc.handling}
