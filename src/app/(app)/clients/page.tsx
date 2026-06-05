@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { listClients, listDocuments } from "@/lib/db";
+import { listClientsFull, listDocuments } from "@/lib/db";
 import { isSupabaseConfigured } from "@/lib/supabase";
+import AddClientButton from "@/components/AddClientButton";
+import ClientRowActions from "@/components/ClientRowActions";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +15,7 @@ export default async function ClientsPage() {
     );
   }
 
-  const [clients, docs] = await Promise.all([listClients(), listDocuments({ limit: 500 })]);
+  const [clients, docs] = await Promise.all([listClientsFull(), listDocuments({ limit: 500 })]);
   const docCount = (id: string) => docs.filter((d) => d.client_id === id).length;
 
   return (
@@ -22,9 +24,10 @@ export default async function ClientsPage() {
         <div>
           <h1 className="font-display text-2xl">Clients</h1>
           <p className="mt-1 text-[var(--color-fg-muted)]">
-            {clients.length} active clients · unified view across books, compliance, and communication
+            {clients.length} active clients · uploads auto-match by GSTIN → PAN → email domain
           </p>
         </div>
+        <AddClientButton />
       </header>
 
       <div className="card overflow-hidden">
@@ -34,34 +37,58 @@ export default async function ClientsPage() {
               <th className="px-4 py-2.5">Client</th>
               <th className="px-4 py-2.5">GSTIN</th>
               <th className="px-4 py-2.5">PAN</th>
+              <th className="px-4 py-2.5">Email</th>
               <th className="px-4 py-2.5">Documents</th>
               <th className="px-4 py-2.5" />
             </tr>
           </thead>
           <tbody>
-            {clients.map((c) => (
-              <tr
-                key={c.id}
-                className="border-b border-[var(--color-border)] last:border-0 hover:bg-[var(--color-surface-2)]"
-              >
-                <td className="px-4 py-3 text-[13px] font-medium text-[var(--color-ink)]">{c.name}</td>
-                <td className="px-4 py-3 font-mono text-[12px] text-[var(--color-fg-muted)]">
-                  {c.gstin ?? "—"}
-                </td>
-                <td className="px-4 py-3 font-mono text-[12px] text-[var(--color-fg-muted)]">
-                  {/* listClients returns id/name/gstin; PAN shown on detail later */}—
-                </td>
-                <td className="px-4 py-3 text-[13px] text-[var(--color-fg)]">{docCount(c.id)}</td>
-                <td className="px-4 py-3 text-right">
-                  <Link
-                    href={`/documents?client=${c.id}`}
-                    className="rounded-lg border border-[var(--color-border)] px-2.5 py-1 text-[12px] font-medium text-[var(--color-fg-muted)] hover:border-[var(--color-border-strong)] hover:text-[var(--color-ink)]"
-                  >
-                    View documents
-                  </Link>
+            {clients.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-4 py-12 text-center text-[var(--color-fg-muted)]">
+                  No clients yet — add your first one to start auto-matching uploads.
                 </td>
               </tr>
-            ))}
+            ) : (
+              clients.map((c) => (
+                <tr
+                  key={c.id}
+                  className="border-b border-[var(--color-border)] last:border-0 hover:bg-[var(--color-surface-2)]"
+                >
+                  <td className="px-4 py-3 text-[13px] font-medium text-[var(--color-ink)]">
+                    {c.name}
+                  </td>
+                  <td className="px-4 py-3 font-mono text-[12px] text-[var(--color-fg-muted)]">
+                    {c.gstin ?? "—"}
+                  </td>
+                  <td className="px-4 py-3 font-mono text-[12px] text-[var(--color-fg-muted)]">
+                    {c.pan ?? "—"}
+                  </td>
+                  <td className="px-4 py-3 text-[12px] text-[var(--color-fg-muted)]">
+                    {c.primary_email ?? "—"}
+                  </td>
+                  <td className="px-4 py-3 text-[13px] text-[var(--color-fg)]">
+                    <Link
+                      href={`/documents?client=${c.id}`}
+                      className="hover:text-[var(--color-ink)] hover:underline"
+                    >
+                      {docCount(c.id)}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <ClientRowActions
+                      client={{
+                        id: c.id,
+                        name: c.name,
+                        gstin: c.gstin ?? undefined,
+                        pan: c.pan ?? undefined,
+                        primary_email: c.primary_email ?? undefined,
+                      }}
+                    />
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

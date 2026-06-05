@@ -130,6 +130,15 @@ export async function getMe(): Promise<MeContext> {
   return { fullName, firstName: fullName.split(/\s+/)[0] || fullName, firmName, authed: true };
 }
 
+/** Full client rows for the Clients page (edit form needs every column). */
+export async function listClientsFull(): Promise<Client[]> {
+  if (!isSupabaseConfigured()) return [];
+  const sb = await readClient();
+  const { data, error } = await sb.from("client").select("*").order("name", { ascending: true });
+  if (error) throw new Error(`listClientsFull: ${error.message}`);
+  return (data ?? []) as Client[];
+}
+
 /** The firm's clients, for the filter dropdown + reassign control. */
 export async function listClients(): Promise<Pick<Client, "id" | "name" | "gstin">[]> {
   if (!isSupabaseConfigured()) return [];

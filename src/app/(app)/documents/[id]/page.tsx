@@ -3,8 +3,10 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, FileText } from "lucide-react";
 import { getDocument, getSignedUrl, listClients } from "@/lib/db";
 import { CLASSIFICATION_LABELS } from "@/lib/types";
-import { classificationBadge, fmtDate, inr } from "@/lib/fields";
+import { classificationBadge, fmtDate } from "@/lib/fields";
 import DetailActions from "@/components/DetailActions";
+import DeleteDocument from "@/components/DeleteDocument";
+import FieldEditor from "@/components/FieldEditor";
 
 export default async function DocumentDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -12,7 +14,6 @@ export default async function DocumentDetail({ params }: { params: Promise<{ id:
   if (!doc) notFound();
 
   const signedUrl = await getSignedUrl(doc.storage_path);
-  const fields = Object.entries(doc.extracted_fields ?? {});
 
   return (
     <div className="fade-up space-y-5">
@@ -39,6 +40,7 @@ export default async function DocumentDetail({ params }: { params: Promise<{ id:
             · added {fmtDate(doc.created_at)}
           </p>
         </div>
+        <DeleteDocument id={doc.id} />
       </header>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.4fr_1fr]">
@@ -88,36 +90,10 @@ export default async function DocumentDetail({ params }: { params: Promise<{ id:
             <h2 className="font-display text-sm uppercase tracking-wide text-[var(--color-fg-dim)]">
               Extracted fields
             </h2>
-            <dl className="mt-3 divide-y divide-[var(--color-border)]">
-              {fields.length === 0 ? (
-                <p className="py-2 text-sm text-[var(--color-fg-muted)]">No fields extracted.</p>
-              ) : (
-                fields.map(([k, v]) => (
-                  <div key={k} className="flex items-start justify-between gap-4 py-2">
-                    <dt className="text-sm text-[var(--color-fg-muted)]">{prettyKey(k)}</dt>
-                    <dd className="text-right text-sm font-medium text-[var(--color-fg)]">
-                      {formatValue(k, v)}
-                    </dd>
-                  </div>
-                ))
-              )}
-            </dl>
+            <FieldEditor id={doc.id} fields={doc.extracted_fields ?? {}} />
           </section>
         </div>
       </div>
     </div>
   );
-}
-
-function prettyKey(k: string): string {
-  return k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-const MONEY_KEYS = /total|amount|value|balance|tds|cgst|sgst|igst|refund|paid/i;
-
-function formatValue(key: string, v: unknown): string {
-  if (v == null) return "—";
-  if (typeof v === "number" && MONEY_KEYS.test(key)) return inr(v) ?? String(v);
-  if (typeof v === "object") return JSON.stringify(v);
-  return String(v);
 }
