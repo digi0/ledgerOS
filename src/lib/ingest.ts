@@ -35,6 +35,9 @@ export async function uploadAndParse(formData: FormData): Promise<UploadResult> 
   if (!/\.pdf$/i.test(file.name)) {
     return { ok: false, error: "Only PDF documents are supported right now." };
   }
+  if (file.size > 25 * 1024 * 1024) {
+    return { ok: false, error: "File is over 25 MB — split or compress it." };
+  }
 
   const authEnabled = process.env.NEXT_PUBLIC_AUTH_ENABLED === "true";
   const sb = authEnabled ? await supabaseServer() : serverAdmin();
@@ -87,9 +90,23 @@ export async function uploadAndParse(formData: FormData): Promise<UploadResult> 
     .select("id")
     .single();
 
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    // failed insert strands the uploaded file — clean it up
+    await serverAdmin().storage.from("documents").remove([path]);
+    return { ok: false, error: friendlyDbError(error.message) };
+  }
 
   revalidatePath("/documents");
   revalidatePath("/");
   return { ok: true, id: data.id as string };
+}
+
+/** Translate raw Postgres/Supabase errors into something a CA can act on. */
+function friendlyDbError(msg: string): string {
+  if (/row-level security/i.test(msg)) {
+    return "Your account isn't linked to a firm — sign out and back in; if it persists, contact support.";
+  }
+  if (/duplicate key/i.test(msg)) return "This document appears to already exist.";
+  if (/violates foreign key/i.test(msg)) return "The selected client no longer exists — refresh and retry.";
+  return `Couldn't save the document: ${msg}`;
 }

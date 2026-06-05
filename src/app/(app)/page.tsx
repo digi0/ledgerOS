@@ -4,6 +4,7 @@ import { getMe, inboxCounts, listClients, listDocuments } from "@/lib/db";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { CLASSIFICATION_LABELS } from "@/lib/types";
 import { inr, timeAgo } from "@/lib/fields";
+import { computeCompliance, daysUntil } from "@/lib/compliance";
 
 export const dynamic = "force-dynamic";
 
@@ -24,14 +25,15 @@ export default async function Dashboard() {
     getMe(),
   ]);
 
-  const today = new Date().toISOString().slice(0, 10);
-  const processedToday = docs.filter((d) => d.created_at.slice(0, 10) === today).length;
   const itcAtRisk = docs
     .filter((d) => d.classification === "notice")
     .reduce((s, d) => s + Number((d.extracted_fields as Record<string, unknown>).amount_disputed ?? 0), 0);
   const recent = docs.slice(0, 7);
   const unmatched = docs.filter((d) => !d.client_id).length;
-  const returnsOnFile = docs.filter((d) => d.classification === "gst_return").length;
+  const gstReturns = docs.filter((d) => d.classification === "gst_return");
+  const returnsOnFile = gstReturns.length;
+  const deadlines = computeCompliance({ clients, gstReturns }).slice(0, 4);
+  const nextDue = deadlines.find((d) => d.status !== "filed");
 
   const fullDate = new Date().toLocaleDateString("en-IN", {
     weekday: "long",
@@ -118,7 +120,11 @@ export default async function Dashboard() {
       {/* stat cards */}
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Active Clients" value={String(clients.length)} sub="all onboarded" />
-        <Stat label="Docs Processed Today" value={String(processedToday)} sub="live ingestion" ok />
+        <Stat
+          label="Pending Compliance"
+          value={String(deadlines.filter((d) => d.status !== "filed").length)}
+          sub={nextDue ? `Next: ${nextDue.label.split(" · ")[0]} · ${fmtDay(nextDue.date)}` : "nothing due soon"}
+        />
         <Stat label="Unmatched Documents" value={String(unmatched)} sub="assign a client from the inbox" />
         <Stat label="ITC at Risk" value={inr(itcAtRisk) ?? "₹0"} sub={`${counts.new} new in inbox`} warn />
       </section>
@@ -129,13 +135,56 @@ export default async function Dashboard() {
         <div className="card p-5">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="font-display text-[15px]">Upcoming Compliance</h3>
-            <span className="text-[11px] text-[var(--color-fg-dim)]">Coming with the compliance module</span>
+            <Link href="/compliance" className="text-[11px] text-[var(--color-fg-dim)] hover:text-[var(--color-ink)]">
+              View all
+            </Link>
           </div>
-          <p className="rounded-lg bg-[var(--color-surface-2)] p-4 text-[12px] leading-relaxed text-[var(--color-fg-muted)]">
-            No calendar yet — deadlines will be generated from each client&apos;s GSTIN and
-            filing frequency once the compliance module lands. Until then, due dates parsed
-            from notices appear on the documents themselves.
-          </p>
+          {deadlines.length === 0 ? (
+            <p className="rounded-lg bg-[var(--color-surface-2)] p-4 text-[12px] leading-relaxed text-[var(--color-fg-muted)]">
+              No deadlines yet — add a client with a GSTIN and their GSTR-1/3B dates appear
+              here automatically.
+            </p>
+          ) : (
+            <div className="space-y-1">
+              {deadlines.map((u, i) => {
+                const d = new Date(u.date);
+                const days = daysUntil(u.date);
+                return (
+                  <div
+                    key={`${u.date}-${u.form}-${i}`}
+                    className="flex items-center gap-3 rounded-lg px-2 py-2.5 hover:bg-[var(--color-surface-2)]"
+                  >
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[var(--color-surface-2)] leading-none">
+                      <span className="text-[14px] font-bold text-[var(--color-ink)]">{d.getDate()}</span>
+                      <span className="text-[9px] font-semibold uppercase text-[var(--color-fg-dim)]">
+                        {d.toLocaleDateString("en-IN", { month: "short" })}
+                      </span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[13px] font-medium text-[var(--color-ink)]">{u.label}</p>
+                      <p className="truncate text-[11px] text-[var(--color-fg-dim)]">
+                        {u.scope === "client" ? `${u.clientName} · ` : "Firm-wide · "}
+                        {u.detail}
+                      </p>
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                        u.status === "filed"
+                          ? "bg-[var(--color-ok-soft)] text-[var(--color-ok)]"
+                          : u.status === "overdue"
+                            ? "bg-[var(--color-alert-soft)] text-[var(--color-alert)]"
+                            : days <= 7
+                              ? "bg-[var(--color-warn-soft)] text-[var(--color-warn)]"
+                              : "bg-[var(--color-surface-2)] text-[var(--color-fg-muted)]"
+                      }`}
+                    >
+                      {u.status === "filed" ? "Filed" : u.status === "overdue" ? `${Math.abs(days)}d overdue` : `${days}d`}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* recent activity */}
@@ -314,6 +363,10 @@ function Stat({
       </p>
     </div>
   );
+}
+
+function fmtDay(date: string): string {
+  return new Date(date).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
 
 function initials(name: string): string {
