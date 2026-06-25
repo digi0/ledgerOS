@@ -42,7 +42,10 @@ export const gstReturnProvider: Provider = {
     const fields = {
       form: form ? `GSTR-${form.toUpperCase()}` : null,
       gstin,
-      legal_name: capture(text, /legal name of the registered person\s*:?\s*(.+?)\s*(?:2\(b\)|trade name)/i),
+      legal_name:
+        capture(text, /legal name of the registered person\s*:?\s*(.+?)\s*(?:2\(b\)|trade name)/i) ??
+        // Quarterly portal format: "January-March2026 <GSTIN> <Company Name> ("
+        capture(text, /[A-Za-z]+-[A-Za-z]+\s*\d{4}\s+[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][0-9A-Z]{3}\s+([A-Z][A-Z &.',-]{3,60}?)\s*[\([]/i),
       trade_name: capture(text, /trade name,?\s*if any\s*:?\s*(.+?)\s*(?:2\(c\)|\barn\b)/i),
       period: filingPeriod(text),
       arn,
@@ -73,12 +76,23 @@ function numbersAfter(text: string, label: RegExp, n: number): number[] | null {
   return nums.length === n ? nums : nums.length > 0 ? nums : null;
 }
 
-/** "Year 2026-27 Period April" → "April 2026" (FY runs Apr–Mar, so
- *  Jan/Feb/Mar fall in the second calendar year of the FY). */
+/** Parse filing period from GSTR portal text.
+ *  Handles:
+ *   - "Year 2026-27 Period April" → "April 2026"
+ *   - "January-March2026" (quarterly consolidated) → "January–March 2026"
+ */
 function filingPeriod(text: string): string | null {
-  const period = capture(text, /period\s+([A-Za-z]+)/i);
-  const fy = capture(text, /year\s+(\d{4})\s*-\s*\d{2,4}/i);
-  if (!period) return null;
+  // Quarterly range: "January-March2026" or "October-December 2025"
+  const range = capture(text, /\b(January|February|March|April|May|June|July|August|September|October|November|December)-([A-Za-z]+)\s*(\d{4})/i);
+  if (range) {
+    const m = text.match(/\b(January|February|March|April|May|June|July|August|September|October|November|December)-([A-Za-z]+)\s*(\d{4})/i);
+    if (m) return `${m[1]}–${m[2]} ${m[3]}`;
+  }
+
+  // Single month: "Period April" with FY "Year 2026-27"
+  const period = capture(text, /\bperiod\s+([A-Za-z]+)/i);
+  const fy = capture(text, /\byear\s+(\d{4})\s*-\s*\d{2,4}/i);
+  if (!period || period.toLowerCase() === "net") return null;
   if (!fy) return period;
   const firstYear = Number(fy);
   const month = period.toLowerCase().slice(0, 3);
