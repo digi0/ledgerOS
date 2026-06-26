@@ -11,7 +11,7 @@ export default function Topbar({ userName = "there" }: { userName?: string }) {
   const date = now.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
 
   return (
-    <header className="glass-heavy sticky top-0 z-20 border-b border-[var(--color-chrome-border)] bg-[var(--color-chrome)]">
+    <header className="sticky top-0 z-20 border-b border-[var(--color-border)] bg-[var(--color-bg)]/85 backdrop-blur">
       <div className="mx-auto flex w-full max-w-[1280px] items-center gap-4 px-6 py-3 lg:px-8">
         <div className="relative max-w-xl flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-fg-dim)]" />
