@@ -47,6 +47,18 @@ export interface Profile {
   updated_at: string;
 }
 
+export const CLIENT_SERVICES = {
+  gst:         "GST Filing",
+  tds:         "TDS Returns",
+  itr:         "Income Tax",
+  bookkeeping: "Bookkeeping",
+  audit:       "Audit",
+  roc:         "ROC / Company",
+  payroll:     "Payroll",
+} as const;
+
+export type ClientService = keyof typeof CLIENT_SERVICES;
+
 export interface Client {
   id: string;
   firm_id: string;
@@ -55,6 +67,7 @@ export interface Client {
   pan: string | null;
   primary_email: string | null;
   primary_domain: string | null;
+  services: ClientService[];
   created_at: string;
   updated_at: string;
 }

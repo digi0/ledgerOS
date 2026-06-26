@@ -56,7 +56,9 @@ export default async function ClientsPage() {
                   className="border-b border-[var(--color-border)] last:border-0 hover:bg-[var(--color-surface-2)]"
                 >
                   <td className="px-4 py-3 text-[13px] font-medium text-[var(--color-ink)]">
-                    {c.name}
+                    <Link href={`/clients/${c.id}`} className="hover:text-[var(--color-brand)] hover:underline">
+                      {c.name}
+                    </Link>
                   </td>
                   <td className="px-4 py-3 font-mono text-[12px] text-[var(--color-fg-muted)]">
                     {c.gstin ?? "—"}
@@ -83,6 +85,7 @@ export default async function ClientsPage() {
                         gstin: c.gstin ?? undefined,
                         pan: c.pan ?? undefined,
                         primary_email: c.primary_email ?? undefined,
+                        services: c.services ?? [],
                       }}
                     />
                   </td>

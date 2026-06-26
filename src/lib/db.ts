@@ -130,6 +130,15 @@ export async function getMe(): Promise<MeContext> {
   return { fullName, firstName: fullName.split(/\s+/)[0] || fullName, firmName, authed: true };
 }
 
+/** Single client by id — for the profile page. */
+export async function getClient(id: string): Promise<Client | null> {
+  if (!isSupabaseConfigured()) return null;
+  const sb = await readClient();
+  const { data, error } = await sb.from("client").select("*").eq("id", id).maybeSingle();
+  if (error) throw new Error(`getClient: ${error.message}`);
+  return data as Client | null;
+}
+
 /** Full client rows for the Clients page (edit form needs every column). */
 export async function listClientsFull(): Promise<Client[]> {
   if (!isSupabaseConfigured()) return [];

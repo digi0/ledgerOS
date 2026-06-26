@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, X } from "lucide-react";
 import { saveClient, type ClientInput } from "@/lib/client-actions";
+import { CLIENT_SERVICES, type ClientService } from "@/lib/types";
 
 /**
  * Add/edit client modal — one form for both (pass `client` with an id to
@@ -22,6 +23,13 @@ export default function ClientDialog({
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [services, setServices] = useState<ClientService[]>(
+    (client?.services ?? []) as ClientService[],
+  );
+
+  function toggleService(s: ClientService) {
+    setServices((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]);
+  }
 
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -34,6 +42,7 @@ export default function ClientDialog({
         gstin: String(fd.get("gstin") ?? ""),
         pan: String(fd.get("pan") ?? ""),
         primary_email: String(fd.get("primary_email") ?? ""),
+        services,
       });
       if (!res.ok) setError(res.error);
       else {
@@ -124,6 +133,31 @@ export default function ClientDialog({
               placeholder="accounts@krishnamotors.in"
               className={inputCls}
             />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-[var(--color-fg-dim)]">
+              Services
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {(Object.keys(CLIENT_SERVICES) as ClientService[]).map((s) => {
+                const active = services.includes(s);
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => toggleService(s)}
+                    className={`rounded-full border px-3 py-1 text-[12px] font-medium transition-colors ${
+                      active
+                        ? "border-[var(--color-brand)] bg-[var(--color-brand)] text-white"
+                        : "border-[var(--color-border)] text-[var(--color-fg-muted)] hover:border-[var(--color-border-strong)]"
+                    }`}
+                  >
+                    {CLIENT_SERVICES[s]}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {error && <p className="text-[12px] text-[var(--color-alert)]">{error}</p>}

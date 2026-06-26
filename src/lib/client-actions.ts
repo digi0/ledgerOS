@@ -47,6 +47,7 @@ export interface ClientInput {
   gstin?: string;
   pan?: string;
   primary_email?: string;
+  services?: string[];
 }
 
 export type SaveClientResult = { ok: true; id: string } | { ok: false; error: string };
@@ -80,8 +81,10 @@ export async function saveClient(input: ClientInput): Promise<SaveClientResult> 
   const domain = email ? email.split("@")[1] : null;
   const primary_domain = domain && !FREE_MAIL.has(domain) ? domain : null;
 
+  const services = (input.services ?? []).filter(Boolean);
+
   const sb = await mutationClient();
-  const row = { name, gstin, pan, primary_email: email, primary_domain };
+  const row = { name, gstin, pan, primary_email: email, primary_domain, services };
 
   if (input.id) {
     const { error } = await sb.from("client").update(row).eq("id", input.id);
