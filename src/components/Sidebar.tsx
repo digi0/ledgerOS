@@ -10,6 +10,7 @@ import {
   LayoutGrid,
   Landmark,
   LogOut,
+  Receipt,
   Sparkles,
   Users,
 } from "lucide-react";
@@ -51,6 +52,12 @@ export default function Sidebar({
         { href: "/tds", label: "TDS", icon: Landmark },
         { href: "/income-tax", label: "Income Tax", icon: Building2 },
         { href: "/compliance", label: "Compliance", icon: CalendarCheck2, badge: 4 },
+      ],
+    },
+    {
+      title: "Registers",
+      items: [
+        { href: "/purchase-register", label: "Purchase Register", icon: Receipt },
       ],
     },
     {
