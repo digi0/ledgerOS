@@ -90,7 +90,7 @@ function asStr(v: unknown): string | null {
 // ---- Badge styling (token-based, light/dark aware) ----------------------
 
 export function classificationBadge(c: DocumentClassification): string {
-  const base = "inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ";
+  const base = "glass-pill inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ";
   switch (c) {
     case "invoice":
       return base + "bg-[var(--color-brand-soft)] text-[var(--color-brand-strong)]";

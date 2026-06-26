@@ -50,6 +50,14 @@ body {
   color: var(--color-fg);
 }
 
+/* Barely-perceptible page tint — gives backdrop-filter something to refract */
+body {
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 0%,  rgba(99, 102, 241, 0.055) 0%, transparent 65%),
+    radial-gradient(ellipse 60% 60% at 85% 100%, rgba(14, 165, 233,  0.04) 0%, transparent 65%),
+    var(--color-bg);
+}
+
 body {
   font-family: var(--font-sans);
   font-size: 13px;
@@ -89,11 +97,53 @@ a {
     transform 120ms ease;
 }
 
-/* Card: the workhorse surface. */
+/* Card — liquid glass surface */
 .card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 16px;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 1),      /* specular top edge   */
+    inset 0 -1px 0 rgba(0, 0, 0, 0.04),         /* soft bottom line    */
+    0 0 0 1px rgba(0, 0, 0, 0.07),              /* outer border        */
+    0 4px 16px rgba(0, 0, 0, 0.055),            /* close ambient       */
+    0 16px 48px rgba(0, 0, 0, 0.07);            /* depth               */
+}
+
+/* Primary glass button — use this class on brand-coloured CTAs */
+.btn-glass {
+  background: linear-gradient(180deg, #2c3e57 0%, var(--color-brand) 100%);
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),   /* specular highlight  */
+    0 1px 2px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.12);
+  transition: box-shadow 150ms ease, transform 120ms ease;
+}
+.btn-glass:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 1px 3px rgba(0, 0, 0, 0.18),
+    0 6px 18px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+.btn-glass:active {
+  transform: translateY(0);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+/* Glass pill — for service tags, classification badges, filter chips */
+.glass-pill {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 /* Interactive row (inbox, tables). */
@@ -120,7 +170,14 @@ a {
   color: var(--color-ink);
 }
 .nav-item[data-active="true"] {
-  background: var(--color-surface-2);
+  /* Glass pill for active nav */
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 0 0 1px rgba(0, 0, 0, 0.07),
+    0 2px 8px rgba(0, 0, 0, 0.07);
   color: var(--color-ink);
   font-weight: 600;
 }

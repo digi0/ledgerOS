@@ -10,7 +10,7 @@ export default function AddClientButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 rounded-[10px] bg-[var(--color-brand)] px-3.5 py-2 text-[13px] font-medium text-white hover:bg-[var(--color-brand-strong)]"
+        className="btn-glass inline-flex items-center gap-2 rounded-[10px] bg-[var(--color-brand)] px-3.5 py-2 text-[13px] font-medium text-white"
       >
         <Plus className="h-4 w-4" /> Add client
       </button>

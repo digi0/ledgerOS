@@ -87,7 +87,7 @@ export default async function ClientProfile({ params }: { params: Promise<{ id: 
               {client.services.map((s) => (
                 <span
                   key={s}
-                  className="rounded-full border border-[var(--color-brand)] bg-[var(--color-brand)]/10 px-2.5 py-0.5 text-[11px] font-medium text-[var(--color-brand-strong)]"
+                  className="glass-pill rounded-full border border-[var(--color-brand)]/30 px-2.5 py-0.5 text-[11px] font-medium text-[var(--color-brand-strong)]"
                 >
                   {CLIENT_SERVICES[s as ClientService]}
                 </span>
@@ -122,7 +122,7 @@ export default async function ClientProfile({ params }: { params: Promise<{ id: 
               const overdue = deadlines.filter((d) => d.status === "overdue").length;
 
               return (
-                <div key={svc} className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+                <div key={svc} className="card p-4">
                   <p className="text-[13px] font-semibold text-[var(--color-ink)]">
                     {CLIENT_SERVICES[svc]}
                   </p>
@@ -171,7 +171,7 @@ export default async function ClientProfile({ params }: { params: Promise<{ id: 
             </Link>
           </div>
 
-          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden">
+          <div className="card overflow-hidden">
             {recentDocs.length === 0 ? (
               <div className="flex flex-col items-center gap-2 py-10 text-center text-[var(--color-fg-muted)]">
                 <FileText className="h-7 w-7 opacity-40" />
@@ -215,7 +215,7 @@ export default async function ClientProfile({ params }: { params: Promise<{ id: 
           <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-fg-dim)]">
             Upcoming Deadlines
           </h2>
-          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] divide-y divide-[var(--color-border)]">
+          <div className="card divide-y divide-[var(--color-border)]">
             {allDeadlines.filter((d) => d.status !== "filed").slice(0, 8).length === 0 ? (
               <p className="px-4 py-6 text-center text-[12px] text-[var(--color-fg-muted)]">
                 No upcoming deadlines

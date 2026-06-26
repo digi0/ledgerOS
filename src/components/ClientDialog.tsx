@@ -173,7 +173,7 @@ export default function ClientDialog({
             <button
               type="submit"
               disabled={pending}
-              className="inline-flex items-center gap-2 rounded-[10px] bg-[var(--color-brand)] px-3.5 py-2 text-[13px] font-medium text-white hover:bg-[var(--color-brand-strong)] disabled:opacity-60"
+              className="btn-glass inline-flex items-center gap-2 rounded-[10px] bg-[var(--color-brand)] px-3.5 py-2 text-[13px] font-medium text-white disabled:opacity-60"
             >
               {pending && <Loader2 className="h-4 w-4 animate-spin" />}
               {client?.id ? "Save changes" : "Add client"}
