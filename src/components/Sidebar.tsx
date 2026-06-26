@@ -63,7 +63,7 @@ export default function Sidebar({
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-[252px] shrink-0 flex-col justify-between border-r border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-4 md:flex">
+    <aside className="glass-heavy sticky top-0 hidden h-screen w-[252px] shrink-0 flex-col justify-between border-r border-[var(--color-chrome-border)] bg-[var(--color-chrome)] px-3.5 py-4 md:flex">
       <div>
         {/* brand */}
         <Link href="/" className="mb-6 flex items-center gap-2.5 px-1.5">
@@ -111,7 +111,7 @@ export default function Sidebar({
       </div>
 
       {/* firm card */}
-      <div className="flex items-center gap-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-2.5">
+      <div className="flex items-center gap-2.5 rounded-xl border border-[var(--color-chrome-border)] bg-[rgba(255,255,255,0.04)] p-2.5">
         <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[9px] bg-[var(--color-brand)] text-sm font-semibold text-white">
           {firmName.charAt(0).toUpperCase()}
         </span>
