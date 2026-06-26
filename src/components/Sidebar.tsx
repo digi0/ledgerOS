@@ -7,6 +7,7 @@ import {
   Building2,
   CalendarCheck2,
   FileText,
+  GitCompareArrows,
   LayoutGrid,
   Landmark,
   LogOut,
@@ -57,7 +58,8 @@ export default function Sidebar({
     {
       title: "Registers",
       items: [
-        { href: "/purchase-register", label: "Purchase Register", icon: Receipt },
+        { href: "/purchase-register",    label: "Purchase Register", icon: Receipt },
+        { href: "/gst/reconciliation",   label: "GSTR-2B Recon",    icon: GitCompareArrows },
       ],
     },
     {
