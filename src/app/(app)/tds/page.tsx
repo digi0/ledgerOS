@@ -11,11 +11,11 @@ export default function TdsPage() {
       ready: true,
     },
     {
-      href: "#",
+      href: "/tds/reconciliation",
       icon: ShieldCheck,
       label: "26AS Reconciliation",
       desc: "Match your TDS register against Form 26AS to catch unclaimed credits before filing.",
-      ready: false,
+      ready: true,
     },
     {
       href: "#",

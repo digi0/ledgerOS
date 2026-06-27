@@ -162,6 +162,7 @@ export default async function ReconciliationPage({
           currentClient={clientId}
           currentPeriod={period}
           periods={periods}
+          basePath="/gst/reconciliation"
         />
       </header>
 

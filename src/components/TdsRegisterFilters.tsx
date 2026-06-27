@@ -8,6 +8,7 @@ interface Props {
   currentFy: string;
   currentQuarter: string;
   fyOptions: { value: string; label: string }[];
+  basePath?: string;
 }
 
 export default function TdsRegisterFilters({
@@ -16,6 +17,7 @@ export default function TdsRegisterFilters({
   currentFy,
   currentQuarter,
   fyOptions,
+  basePath = "/tds/register",
 }: Props) {
   const router = useRouter();
 
@@ -24,7 +26,7 @@ export default function TdsRegisterFilters({
     if (client) p.set("client", client);
     if (fy) p.set("fy", fy);
     if (quarter) p.set("quarter", quarter);
-    router.push(`/tds/register${p.toString() ? `?${p}` : ""}`);
+    router.push(`${basePath}${p.toString() ? `?${p}` : ""}`);
   };
 
   const sel =

@@ -7,6 +7,7 @@ interface Props {
   currentClient: string;
   currentPeriod: string;
   periods: { value: string; label: string }[];
+  basePath?: string;
 }
 
 export default function PurchaseRegisterFilters({
@@ -14,6 +15,7 @@ export default function PurchaseRegisterFilters({
   currentClient,
   currentPeriod,
   periods,
+  basePath = "/purchase-register",
 }: Props) {
   const router = useRouter();
 
@@ -22,7 +24,7 @@ export default function PurchaseRegisterFilters({
     if (client) p.set("client", client);
     if (period) p.set("period", period);
     const qs = p.toString();
-    router.push(`/purchase-register${qs ? `?${qs}` : ""}`);
+    router.push(`${basePath}${qs ? `?${qs}` : ""}`);
   };
 
   const selectCls =
