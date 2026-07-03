@@ -30,6 +30,8 @@ const DOC_SELECT =
 
 export interface InboxFilters {
   classification?: DocumentClassification;
+  /** Multi-value classification filter — used by the copilot for topic-scoped grounding. */
+  classifications?: DocumentClassification[];
   handling?: HandlingStatus;
   clientId?: string;
   search?: string;
@@ -54,7 +56,8 @@ export async function listDocuments(filters: InboxFilters = {}): Promise<Documen
     .order("created_at", { ascending: false })
     .limit(filters.limit ?? 100);
 
-  if (filters.classification) q = q.eq("classification", filters.classification);
+  if (filters.classifications?.length) q = q.in("classification", filters.classifications);
+  else if (filters.classification) q = q.eq("classification", filters.classification);
   if (filters.handling) q = q.eq("handling", filters.handling);
   if (filters.clientId) q = q.eq("client_id", filters.clientId);
   if (filters.search) {

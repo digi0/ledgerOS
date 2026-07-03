@@ -7,12 +7,18 @@ import { askCopilot, type ChatMessage } from "@/lib/copilot";
 /**
  * Copilot chat surface. The transcript lives in client state and is sent
  * whole on every turn (the server action is stateless); refresh = new chat.
+ *
+ * pinnedContextRef: the grounding block is built once on the first turn and
+ * reused for all subsequent turns in the same conversation. This keeps the
+ * system prompt byte-for-byte identical across turns so Anthropic's prompt
+ * cache stays warm — 10× cheaper reads vs. 1.25× writes.
  */
 export default function CopilotChat({ suggestions }: { suggestions: string[] }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [pending, startTransition] = useTransition();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const pinnedContextRef = useRef<string | null>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -25,7 +31,8 @@ export default function CopilotChat({ suggestions }: { suggestions: string[] }) 
     setMessages(next);
     setInput("");
     startTransition(async () => {
-      const answer = await askCopilot(next);
+      const { answer, context } = await askCopilot(next, pinnedContextRef.current ?? undefined);
+      if (!pinnedContextRef.current && context) pinnedContextRef.current = context;
       setMessages([...next, { role: "assistant", content: answer }]);
     });
   }

@@ -14,7 +14,7 @@
 import { getMe, listClients, listDocuments } from "./db";
 import { isSupabaseConfigured } from "./supabase";
 import { getLLM } from "./llm";
-import { CLASSIFICATION_LABELS, HANDLING_LABELS } from "./types";
+import { CLASSIFICATION_LABELS, HANDLING_LABELS, type DocumentClassification } from "./types";
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -29,17 +29,38 @@ const SNIPPET_CHARS = 600;
 /** Last N turns sent to the model — older turns fall off (cheaper, v1). */
 const HISTORY_TURNS = 12;
 
+/**
+ * Keyword-based topic router. Returns the relevant classification subset so
+ * buildContext() fetches only the docs the CA is actually asking about,
+ * rather than the full 80-doc grounding block. Returns null for generic
+ * questions, which fall back to the full limit.
+ */
+function detectTopic(question: string): DocumentClassification[] | null {
+  if (/\btds\b|form\s*1[6A]|26as|traces|tds.?deduct/i.test(question))
+    return ["tds_certificate"];
+  if (/\bgst\b|invoice|gstr|igst|cgst|sgst|input.?tax.?credit|\bitc\b/i.test(question))
+    return ["gst_return", "invoice"];
+  if (/bank.?stat|account.?stat/i.test(question))
+    return ["bank_statement"];
+  if (/notice|demand|scrutiny|\bitr\b|income.?tax|advance.?tax/i.test(question))
+    return ["notice"];
+  if (/receipt/i.test(question))
+    return ["receipt"];
+  return null;
+}
+
 function fmtFields(fields: Record<string, unknown>): string {
   const entries = Object.entries(fields ?? {}).filter(([, v]) => v != null && v !== "");
   if (entries.length === 0) return "none";
   return entries.map(([k, v]) => `${k}=${JSON.stringify(v)}`).join(", ");
 }
 
-async function buildContext(): Promise<string> {
+async function buildContext(question: string): Promise<string> {
+  const topic = detectTopic(question);
   const [me, clients, docs] = await Promise.all([
     getMe(),
     listClients(),
-    listDocuments({ limit: DOC_LIMIT }),
+    listDocuments({ limit: DOC_LIMIT, classifications: topic ?? undefined }),
   ]);
 
   const clientLines = clients
@@ -102,25 +123,46 @@ function flattenHistory(history: ChatMessage[]): string {
     : current.content;
 }
 
-export async function askCopilot(history: ChatMessage[]): Promise<string> {
+export interface CopilotResult {
+  answer: string;
+  /** The grounding block used for this turn — pin it on the client to avoid
+   *  rebuilding on every subsequent turn of the same conversation. */
+  context: string;
+}
+
+/**
+ * @param pinnedContext - Pass the `context` from the first turn's result to
+ *   skip the DB fetch on subsequent turns. The system prompt stays identical
+ *   so Anthropic's prompt cache stays warm across the whole conversation.
+ */
+export async function askCopilot(
+  history: ChatMessage[],
+  pinnedContext?: string,
+): Promise<CopilotResult> {
   if (!isSupabaseConfigured()) {
-    return "Supabase isn't connected, so I can't see any documents yet.";
+    return { answer: "Supabase isn't connected, so I can't see any documents yet.", context: "" };
   }
   const last = history[history.length - 1];
   if (!last || last.role !== "user" || !last.content.trim()) {
-    return "Ask me something about the documents in your inbox.";
+    return { answer: "Ask me something about the documents in your inbox.", context: "" };
   }
 
-  const context = await buildContext();
+  const context = pinnedContext ?? (await buildContext(last.content));
   try {
     const answer = await getLLM().complete({
       system: systemPrompt(context),
       user: flattenHistory(history),
       maxTokens: 800,
     });
-    return answer || "I couldn't produce an answer — try rephrasing.";
+    return {
+      answer: answer || "I couldn't produce an answer — try rephrasing.",
+      context,
+    };
   } catch (err) {
     console.error("askCopilot:", err);
-    return "The copilot can't reach Claude right now — check that ANTHROPIC_API_KEY is set and valid.";
+    return {
+      answer: "The copilot can't reach Claude right now — check that ANTHROPIC_API_KEY is set and valid.",
+      context,
+    };
   }
 }
