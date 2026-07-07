@@ -5,6 +5,7 @@ import type { DocumentClassification, HandlingStatus } from "@/lib/types";
 import DocumentRow from "@/components/DocumentRow";
 import InboxFilters from "@/components/InboxFilters";
 import UploadDocument from "@/components/UploadDocument";
+import WorkingFolder from "@/components/WorkingFolder";
 
 type SP = Promise<{ handling?: string; type?: string; client?: string; q?: string }>;
 
@@ -54,6 +55,8 @@ export default async function DocumentsPage({ searchParams }: { searchParams: SP
         </div>
         <UploadDocument />
       </header>
+
+      <WorkingFolder />
 
       <div className="card overflow-hidden">
         {/* tabs */}
