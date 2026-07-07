@@ -85,7 +85,8 @@ export default function InvoiceForm({
   const label = "text-[11px] font-semibold uppercase tracking-wider text-[var(--color-fg-dim)]";
 
   return (
-    <div className="space-y-5">
+    // pb clears the floating Copilot button so it never overlaps the actions.
+    <div className="space-y-5 pb-24">
       {/* Supplier context */}
       <div className="card p-4">
         <p className={label}>Supplier (you, for {client.name})</p>
@@ -151,7 +152,7 @@ export default function InvoiceForm({
                 <th className="px-3 py-2">Description</th>
                 <th className="px-3 py-2 w-24">HSN/SAC</th>
                 <th className="px-3 py-2 w-16 text-right">Qty</th>
-                <th className="px-3 py-2 w-16">Unit</th>
+                <th className="px-3 py-2 w-20">Unit</th>
                 <th className="px-3 py-2 w-28 text-right">Rate</th>
                 <th className="px-3 py-2 w-20">GST%</th>
                 <th className="px-3 py-2 w-28 text-right">Taxable</th>
