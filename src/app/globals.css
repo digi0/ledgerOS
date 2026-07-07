@@ -40,8 +40,58 @@
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 }
 
+/* ============================================================
+   Dark mode — a professional deep-slate (NOT liquid glass).
+   Overrides the palette under html.dark; every surface uses
+   var(--color-*), so these cascade everywhere. Toggle sets the
+   class; the pre-paint script in layout.tsx avoids a flash.
+   ============================================================ */
+html.dark {
+  /* Surfaces — near-black slate, cards a step lighter than the page */
+  --color-bg: #0b0e14;
+  --color-surface: #141821;
+  --color-surface-2: #1c212c;
+  --color-border: #262c39;
+  --color-border-strong: #353d4d;
+
+  /* Ink / text — near-white down to muted slate */
+  --color-ink: #f1f4f9;
+  --color-fg: #dbe0ea;
+  --color-fg-muted: #98a1b2;
+  --color-fg-dim: #6a7385;
+
+  /* Brand stays monochrome slate — light enough to sit above the surfaces
+     (buttons pop, white text stays readable), hover lifts brighter. */
+  --color-brand: #3a4a63;
+  --color-brand-strong: #566988;
+  --color-brand-soft: #1b2536;
+  --color-brand-tint: #161d2b;
+
+  /* Status — brighter on dark so it reads, with deep soft fills */
+  --color-ok: #34d399;
+  --color-ok-soft: #103127;
+  --color-warn: #fbbf24;
+  --color-warn-soft: #33280f;
+  --color-alert: #fb7185;
+  --color-alert-soft: #351a20;
+  --color-info: #60a5fa;
+  --color-info-soft: #14223c;
+}
+
+/* The active-nav pill uses a white glass in light mode — swap it for a dark
+   frosted pill so it doesn't glare on the dark canvas. */
+html.dark .nav-item[data-active="true"] {
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
 :root {
   color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
 }
 
 html,
