@@ -1,0 +1,165 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{width:1680px;font-family:-apple-system,"Segoe UI",Inter,Roboto,sans-serif;
+    background:radial-gradient(ellipse 70% 40% at 12% 0%,rgba(99,102,241,.05),transparent 55%),
+    radial-gradient(ellipse 60% 50% at 92% 100%,rgba(14,165,233,.045),transparent 55%),#f6f7f9;
+    color:#1a2032;padding:44px 48px 40px;}
+  .top{display:flex;align-items:center;gap:14px;margin-bottom:3px;}
+  .logo{width:32px;height:32px;border-radius:8px;background:#1e293b;color:#fff;display:grid;place-items:center;font-weight:700;font-size:16px;}
+  h1{font-size:27px;letter-spacing:-.02em;color:#0e1220;}
+  .sub{color:#5d6478;font-size:14px;margin:2px 0 6px 46px;}
+  .legend{margin:0 0 16px 46px;font-size:12px;color:#8b93a3;}
+  .legend b{color:#0f8a4d;} .legend i{color:#b7791f;font-style:normal;}
+  .layer{display:grid;grid-template-columns:150px 1fr;gap:18px;align-items:stretch;margin-bottom:11px;}
+  .lbl{display:flex;flex-direction:column;justify-content:center;padding:6px 0;}
+  .lbl b{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#0e1220;line-height:1.3;}
+  .lbl span{font-size:11px;color:#8b93a3;margin-top:3px;line-height:1.35;}
+  .row{display:flex;gap:10px;}
+  .col{flex:1;display:flex;flex-direction:column;gap:10px;}
+  .card{background:rgba(255,255,255,.82);border:1px solid #e7eaef;border-radius:12px;padding:11px 13px;
+    box-shadow:0 1px 2px rgba(0,0,0,.03),0 4px 12px rgba(0,0,0,.035);}
+  .card h3{font-size:13.5px;color:#0e1220;letter-spacing:-.01em;display:flex;align-items:center;gap:6px;}
+  .card p{font-size:11.5px;color:#5d6478;margin-top:3px;line-height:1.42;}
+  .tag{font-size:9px;font-weight:800;letter-spacing:.05em;padding:2px 6px;border-radius:5px;text-transform:uppercase;}
+  .rm{background:#fbeed2;color:#8a5a12;}
+  .band{border-radius:12px;padding:12px 14px;}
+  .b-src{background:#eef2ff;border:1px solid #dbe3ff;}
+  .b-eng{background:#0e1220;color:#fff;border:1px solid #0e1220;}
+  .b-eng .card{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.12);}
+  .b-eng .card h3{color:#fff;} .b-eng .card p{color:#aeb6c6;}
+  .b-inbox{background:#e6edfd;border:1px solid #d3e0fb;}
+  .b-reg{background:#eafaf0;border:1px solid #cdeeda;}
+  .b-inv{background:#e3f5ea;border:1px solid #c4e9d3;}
+  .b-comp{background:#fbeede;border:1px solid #f4d6c5;}
+  .b-ws{background:#1e293b;color:#fff;border:1px solid #1e293b;}
+  .b-ws .card{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.14);}
+  .b-ws .card h3{color:#fff;} .b-ws .card p{color:#b6bfd0;}
+  .b-file{background:#eef2ff;border:1px solid #dbe3ff;}
+  .b-ai{background:#f4ecfb;border:1px solid #e6d8f5;}
+  .b-found{background:#f1f3f6;border:1px solid #e2e6ec;}
+  .flow{text-align:center;color:#b3bac6;font-size:15px;font-weight:700;margin:1px 0;}
+  .inline{display:flex;gap:8px;flex-wrap:wrap;}
+  .pill{background:#fff;border:1px solid #e0e4ea;border-radius:8px;padding:6px 10px;font-size:11.5px;color:#1a2032;font-weight:600;}
+  .pill small{color:#8b93a3;font-weight:500;}
+  .b-eng .pill{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.16);color:#e6eaf2;}
+  .b-eng .pill small{color:#9aa3b5;}
+  .b-ws .pill{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.16);color:#eef1f6;}
+  .b-ws .pill small{color:#b6bfd0;}
+</style></head><body>
+
+  <div class="top"><span class="logo">L</span><h1>LedgerOS — Complete Product Map</h1></div>
+  <p class="sub">The operating system for a CA practice, module by module. Data flows top → bottom: messy in, structured &amp; filed out.</p>
+  <p class="legend">Everything is <b>BUILT &amp; live</b> unless tagged <i>ROADMAP</i>. &nbsp; Stack: Next.js 16 · Supabase · Anthropic Claude · Vercel.</p>
+
+  <!-- SOURCES -->
+  <div class="layer">
+    <div class="lbl"><b>① Sources</b><span>how documents arrive</span></div>
+    <div class="band b-src"><div class="row">
+      <div class="col"><div class="card"><h3>Upload</h3><p>Multi-file + page-wide drag-and-drop of PDFs.</p></div></div>
+      <div class="col"><div class="card"><h3>Working folder</h3><p>Point at a local folder once; it's remembered, files ingest in one click.</p></div></div>
+      <div class="col"><div class="card"><h3>Forwarded email <span class="tag rm">Roadmap</span></h3><p>Gmail auto-ingestion — the email plumbing exists; auto-fetch is next.</p></div></div>
+    </div></div>
+  </div>
+  <div class="flow">▼</div>
+
+  <!-- INGESTION ENGINE -->
+  <div class="layer">
+    <div class="lbl"><b>② Ingestion engine</b><span>deterministic — no AI guessing</span></div>
+    <div class="band b-eng">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#8f98ab;margin-bottom:8px;">Parser · 7 providers</div>
+      <div class="inline" style="margin-bottom:10px;">
+        <span class="pill">Invoice</span><span class="pill">Bank statement</span><span class="pill">GST return</span>
+        <span class="pill">TDS certificate</span><span class="pill">Notice <small>GST + IT</small></span><span class="pill">Receipt</span><span class="pill">Generic fallback</span>
+      </div>
+      <div class="row">
+        <div class="col"><div class="card"><h3>India knowledge base</h3><p>GSTIN/PAN validation · INR parsing · day-first dates · GST state codes · TDS sections · HSN/SAC.</p></div></div>
+        <div class="col"><div class="card"><h3>Classify + extract</h3><p>Doc type + key fields pulled by rules — every value traces to the source.</p></div></div>
+        <div class="col"><div class="card"><h3>Auto-match to client</h3><p>GSTIN → PAN → email domain. No match ⇒ flagged "unmatched".</p></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="flow">▼</div>
+
+  <!-- INBOX -->
+  <div class="layer">
+    <div class="lbl"><b>③ Document inbox</b><span>the sorted pile</span></div>
+    <div class="band b-inbox"><div class="row">
+      <div class="col"><div class="card"><h3>Classified &amp; matched list</h3><p>Newest-first, per client, with type + key fields · filter &amp; full-text search · New / In-progress / Handled.</p></div></div>
+      <div class="col"><div class="card"><h3>Manual controls</h3><p>Fix or add extracted fields, reassign the client, delete — the CA overrides anything the pipeline gets wrong.</p></div></div>
+    </div></div>
+  </div>
+  <div class="flow">▼ &nbsp; the data becomes usable, three ways &nbsp; ▼</div>
+
+  <!-- THREE COLUMNS -->
+  <div class="layer">
+    <div class="lbl"><b>④ Registers &amp; reconciliation · Invoicing · Compliance</b><span>the working data, per client</span></div>
+    <div class="row">
+      <div class="col" style="flex:1.1;"><div class="band b-reg" style="height:100%;">
+        <div style="font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#0f8a4d;margin-bottom:8px;">Registers &amp; reconciliation</div>
+        <div class="card"><h3>Purchase register</h3><p>Auto-built from parsed invoices.</p></div>
+        <div class="card" style="margin-top:9px;"><h3>TDS register</h3><p>From Form 16 / 16A / 26AS.</p></div>
+        <div class="card" style="margin-top:9px;"><h3>GSTR-2B reconciliation</h3><p>2B vs purchases → ITC-at-risk, matched / mismatch / missing.</p></div>
+        <div class="card" style="margin-top:9px;"><h3>26AS reconciliation</h3><p>Form 26AS vs the TDS register.</p></div>
+      </div></div>
+      <div class="col"><div class="band b-inv" style="height:100%;">
+        <div style="font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#0f8a4d;margin-bottom:8px;">Invoice generator — outbound</div>
+        <div class="card"><h3>Raise a GST invoice</h3><p>Multi-line, GST auto-computed live (intra/inter split), per-FY serial. Data is <b>born structured</b>.</p></div>
+        <div class="card" style="margin-top:9px;"><h3>Printable tax invoice</h3><p>GST-compliant PDF to send the buyer (stays white paper in dark mode).</p></div>
+        <div class="card" style="margin-top:9px;"><h3>Flows onward</h3><p>Auto-fills the outward register &amp; GSTR-1 — <b>zero re-typing</b>.</p></div>
+      </div></div>
+      <div class="col"><div class="band b-comp" style="height:100%;">
+        <div style="font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#b7791f;margin-bottom:8px;">Compliance engine</div>
+        <div class="card"><h3>Per-client calendar</h3><p>GSTR-1 (11th), GSTR-3B (20th), TDS quarterly, advance tax, ITR, GSTR-9 — rules, not a lookup table.</p></div>
+        <div class="card" style="margin-top:9px;"><h3>Live status</h3><p>Filed / due / overdue · ingested returns auto-mark deadlines Filed.</p></div>
+      </div></div>
+    </div>
+  </div>
+  <div class="flow">▼</div>
+
+  <!-- CLIENT WORKSPACE -->
+  <div class="layer">
+    <div class="lbl"><b>⑤ Client workspace</b><span>the operating surface</span></div>
+    <div class="band b-ws"><div class="row">
+      <div class="col" style="flex:1.4;"><div class="card"><h3>"What's Due" timeline</h3><p>Pick a client → every obligation with its urgency AND the button to do it (each GSTR-1 links straight to its return). The scattered tools become drill-downs from here.</p></div></div>
+      <div class="col"><div class="card"><h3>Invoices raised</h3><p>Every invoice for this client.</p></div></div>
+      <div class="col"><div class="card"><h3>Documents in</h3><p>This client's parsed docs.</p></div></div>
+      <div class="col"><div class="card"><h3>Client book</h3><p>Add / edit clients, GSTIN-validated, services (GST/TDS/ITR…).</p></div></div>
+    </div></div>
+  </div>
+  <div class="flow">▼</div>
+
+  <!-- FILING -->
+  <div class="layer">
+    <div class="lbl"><b>⑥ Filing &amp; export</b><span>push into systems of record</span></div>
+    <div class="band b-file"><div class="row">
+      <div class="col"><div class="card"><h3>Canonical voucher</h3><p>One neutral double-entry model between parsed/generated data and every export target.</p></div></div>
+      <div class="col"><div class="card"><h3>Generate GSTR-1 → portal JSON</h3><p>Unifies parsed + generated invoices → b2b / b2cs / HSN / docs. Review → download → upload. <b>Validated against a real filed return; no GSP licence.</b></p></div></div>
+      <div class="col"><div class="card"><h3>CSV export</h3><p>Universal review / import sheet.</p></div></div>
+      <div class="col"><div class="card"><h3>Tally / Busy XML <span class="tag rm">Roadmap</span></h3><p>Same canonical model, one adapter each. Needs a real Tally file to build against.</p></div></div>
+    </div></div>
+  </div>
+  <div class="flow">▼</div>
+
+  <!-- INTELLIGENCE & UX -->
+  <div class="layer">
+    <div class="lbl"><b>⑦ Intelligence &amp; UX</b><span>across everything</span></div>
+    <div class="band b-ai"><div class="row">
+      <div class="col"><div class="card"><h3>AI Copilot</h3><p>Grounded Q&amp;A over the firm's own parsed docs (Claude). Retrieve-only — never invents tax advice.</p></div></div>
+      <div class="col"><div class="card"><h3>⌘K command palette</h3><p>Fuzzy-jump to any client, page, or action (raise invoice / generate GSTR-1).</p></div></div>
+      <div class="col"><div class="card"><h3>Dashboard</h3><p>Whole practice at a glance — animated stats, compliance, activity, client health.</p></div></div>
+      <div class="col"><div class="card"><h3>Dark mode</h3><p>Toggleable, system-aware; the invoice stays white paper.</p></div></div>
+    </div></div>
+  </div>
+
+  <!-- FOUNDATION -->
+  <div class="layer" style="margin-top:11px;">
+    <div class="lbl"><b>Foundation</b><span>multi-tenant &amp; secure</span></div>
+    <div class="band b-found"><div class="row">
+      <div class="col"><div class="card"><h3>Per-firm auth + RLS</h3><p>Supabase Auth; every row scoped to the firm (firm_id). Postgres + private Storage.</p></div></div>
+      <div class="col"><div class="card"><h3>Reference data</h3><p>Chart of accounts (per firm) · GST rates · HSN/SAC · GST state codes.</p></div></div>
+      <div class="col"><div class="card"><h3>No-hallucination rule</h3><p>Parser &amp; all accounting math are deterministic; AI only answers, never computes tax.</p></div></div>
+      <div class="col"><div class="card"><h3>Data residency <span class="tag rm">Roadmap</span></h3><p>Hosted outside India today; India-region / self-host is the privacy answer.</p></div></div>
+    </div></div>
+  </div>
+
+</body></html>
