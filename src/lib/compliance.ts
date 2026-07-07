@@ -21,6 +21,9 @@ export interface Deadline {
   clientId?: string;
   clientName?: string;
   status: "filed" | "due" | "overdue";
+  /** Return period as "YYYY-MM" (for monthly GST filings) — lets the UI link
+   *  straight to the action for that period. */
+  period?: string;
 }
 
 const MONTHS = [
@@ -91,6 +94,7 @@ export function computeCompliance(opts: {
           clientId: c.id,
           clientName: c.name,
           status: filed ? "filed" : date < todayIso ? "overdue" : "due",
+          period: `${p.getFullYear()}-${String(p.getMonth() + 1).padStart(2, "0")}`,
         });
       }
     }

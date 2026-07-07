@@ -1,25 +1,21 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, FileText, FilePlus2, FileJson } from "lucide-react";
+import { ArrowLeft, FileText, FilePlus2, FileJson, CheckCircle2 } from "lucide-react";
 import { getClient, listDocuments, listInvoices } from "@/lib/db";
-import { computeCompliance, daysUntil } from "@/lib/compliance";
+import { computeCompliance, daysUntil, type Deadline } from "@/lib/compliance";
 import { CLIENT_SERVICES, type ClientService, CLASSIFICATION_LABELS } from "@/lib/types";
 import { classificationBadge, fmtDate, inr } from "@/lib/fields";
 import ClientRowActions from "@/components/ClientRowActions";
 
 export const dynamic = "force-dynamic";
 
-const SERVICE_FORMS: Record<ClientService, string[]> = {
-  gst:         ["GSTR-1", "GSTR-3B", "GSTR-9"],
-  tds:         ["TDS Return"],
-  itr:         ["ITR", "Advance Tax"],
-  bookkeeping: [],
-  audit:       ["ITR"],
-  roc:         [],
-  payroll:     [],
-};
-
-export default async function ClientProfile({ params }: { params: Promise<{ id: string }> }) {
+/**
+ * Client workspace — the operating surface for one client. Instead of hopping
+ * GST / TDS / register / recon tabs, the CA lands here and sees the whole
+ * picture: what's due (with the action to do it), what's been raised, what's
+ * come in. The scattered tools become drill-downs from this timeline.
+ */
+export default async function ClientWorkspace({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const client = await getClient(id);
   if (!client) notFound();
@@ -30,46 +26,31 @@ export default async function ClientProfile({ params }: { params: Promise<{ id: 
     listInvoices(id),
   ]);
 
-  const allDeadlines = computeCompliance({
+  const deadlines = computeCompliance({
     clients: client.gstin ? [{ id: client.id, name: client.name, gstin: client.gstin }] : [],
     gstReturns: gstReturnDocs,
     horizonDays: 90,
-  });
+  }).filter((d) => (d.scope === "client" ? d.clientId === id : true));
 
-  // Deadlines relevant to enrolled services
-  const deadlinesForService = (svc: ClientService) => {
-    const forms = SERVICE_FORMS[svc];
-    if (!forms.length) return [];
-    return allDeadlines.filter((d) => {
-      const matchesForm = forms.some((f) => d.form.startsWith(f));
-      const clientScoped = d.scope === "client" ? d.clientId === id : true;
-      return matchesForm && clientScoped;
-    });
+  const open = deadlines.filter((d) => d.status !== "filed");
+  const filedCount = deadlines.filter((d) => d.status === "filed").length;
+
+  // The action that completes a given obligation, when we have one wired.
+  const actionFor = (d: Deadline): { href: string; label: string } | null => {
+    if (d.form === "GSTR-1" && d.period) return { href: `/gst/gstr1?client=${id}&period=${d.period}`, label: "Generate" };
+    return null;
   };
 
-  const nextDeadline = (svc: ClientService) =>
-    deadlinesForService(svc).find((d) => d.status !== "filed");
-
-  const statusColor = (status: string) => {
-    if (status === "filed") return "text-[var(--color-ok)]";
-    if (status === "overdue") return "text-[var(--color-alert)]";
-    return "text-[var(--color-fg-muted)]";
-  };
-
-  const urgencyBadge = (date: string, status: string) => {
-    if (status === "filed") return null;
+  const urgency = (date: string) => {
     const days = daysUntil(date);
-    if (days < 0) return <span className="ml-1.5 rounded-full bg-[var(--color-alert)] px-2 py-0.5 text-[10px] font-semibold text-white">Overdue</span>;
-    if (days <= 7) return <span className="ml-1.5 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-semibold text-white">{days}d left</span>;
-    return <span className="ml-1.5 text-[11px] text-[var(--color-fg-dim)]">{days}d</span>;
+    if (days < 0) return <span className="rounded-full bg-[var(--color-alert)] px-2 py-0.5 text-[10px] font-semibold text-white">{Math.abs(days)}d overdue</span>;
+    if (days <= 7) return <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-semibold text-white">{days}d left</span>;
+    return <span className="text-[11px] text-[var(--color-fg-dim)]">{days}d</span>;
   };
 
   return (
     <div className="fade-up space-y-6">
-      <Link
-        href="/clients"
-        className="inline-flex items-center gap-1.5 text-sm text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
-      >
+      <Link href="/clients" className="inline-flex items-center gap-1.5 text-sm text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]">
         <ArrowLeft className="h-4 w-4" /> Back to Clients
       </Link>
 
@@ -86,10 +67,7 @@ export default async function ClientProfile({ params }: { params: Promise<{ id: 
           {client.services.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-1.5">
               {client.services.map((s) => (
-                <span
-                  key={s}
-                  className="glass-pill rounded-full border border-[var(--color-brand)]/30 px-2.5 py-0.5 text-[11px] font-medium text-[var(--color-brand-strong)]"
-                >
+                <span key={s} className="glass-pill rounded-full border border-[var(--color-brand)]/30 px-2.5 py-0.5 text-[11px] font-medium text-[var(--color-brand-strong)]">
                   {CLIENT_SERVICES[s as ClientService]}
                 </span>
               ))}
@@ -98,101 +76,77 @@ export default async function ClientProfile({ params }: { params: Promise<{ id: 
         </div>
         <ClientRowActions
           client={{
-            id: client.id,
-            name: client.name,
-            gstin: client.gstin ?? undefined,
-            pan: client.pan ?? undefined,
-            primary_email: client.primary_email ?? undefined,
-            services: client.services,
+            id: client.id, name: client.name,
+            gstin: client.gstin ?? undefined, pan: client.pan ?? undefined,
+            primary_email: client.primary_email ?? undefined, services: client.services,
           }}
         />
       </header>
 
-      {/* Actions — the work you do FOR this client, in one place */}
+      {/* Primary actions */}
       <div className="flex flex-wrap gap-2">
-        <Link
-          href={`/clients/${id}/invoice/new`}
-          className="btn-glass inline-flex items-center gap-2 rounded-[10px] bg-[var(--color-brand)] px-4 py-2 text-[13px] font-medium text-white hover:bg-[var(--color-brand-strong)]"
-        >
+        <Link href={`/clients/${id}/invoice/new`} className="btn-glass inline-flex items-center gap-2 rounded-[10px] bg-[var(--color-brand)] px-4 py-2 text-[13px] font-medium text-white hover:bg-[var(--color-brand-strong)]">
           <FilePlus2 className="h-4 w-4" /> Raise Invoice
         </Link>
-        <Link
-          href={`/gst/gstr1?client=${id}`}
-          className="inline-flex items-center gap-2 rounded-[10px] border border-[var(--color-border)] px-4 py-2 text-[13px] font-medium text-[var(--color-fg)] hover:bg-[var(--color-surface-2)]"
-        >
+        <Link href={`/gst/gstr1?client=${id}`} className="inline-flex items-center gap-2 rounded-[10px] border border-[var(--color-border)] px-4 py-2 text-[13px] font-medium text-[var(--color-fg)] hover:bg-[var(--color-surface-2)]">
           <FileJson className="h-4 w-4" /> Generate GSTR-1
         </Link>
       </div>
 
-      {/* Service status cards */}
-      {client.services.length > 0 && (
-        <section>
-          <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-fg-dim)]">
-            Services
-          </h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {client.services.map((s) => {
-              const svc = s as ClientService;
-              const deadlines = deadlinesForService(svc);
-              const next = nextDeadline(svc);
-              const filed = deadlines.filter((d) => d.status === "filed").length;
-              const overdue = deadlines.filter((d) => d.status === "overdue").length;
-
+      {/* Compliance timeline — the spine: what's due, with the action to do it */}
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-fg-dim)]">What&apos;s Due</h2>
+          {filedCount > 0 && (
+            <span className="inline-flex items-center gap-1 text-[11px] text-[var(--color-ok)]">
+              <CheckCircle2 className="h-3.5 w-3.5" /> {filedCount} filed in window
+            </span>
+          )}
+        </div>
+        <div className="card divide-y divide-[var(--color-border)]">
+          {open.length === 0 ? (
+            <p className="px-4 py-8 text-center text-[13px] text-[var(--color-fg-muted)]">
+              {client.gstin ? "Nothing due in the next 90 days." : "Add a GSTIN to track this client's GST deadlines."}
+            </p>
+          ) : (
+            open.map((d, i) => {
+              const action = actionFor(d);
               return (
-                <div key={svc} className="card p-4">
-                  <p className="text-[13px] font-semibold text-[var(--color-ink)]">
-                    {CLIENT_SERVICES[svc]}
-                  </p>
-
-                  {deadlines.length === 0 ? (
-                    <p className="mt-2 text-[12px] text-[var(--color-fg-dim)]">No deadlines in window</p>
-                  ) : (
-                    <div className="mt-2 space-y-1">
-                      {overdue > 0 && (
-                        <p className="text-[12px] text-[var(--color-alert)]">{overdue} overdue</p>
-                      )}
-                      {filed > 0 && (
-                        <p className="text-[12px] text-[var(--color-ok)]">{filed} filed</p>
-                      )}
-                      {next && (
-                        <div className="mt-2 flex items-center text-[12px]">
-                          <span className={statusColor(next.status)}>{next.label}</span>
-                          {urgencyBadge(next.date, next.status)}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {svc === "bookkeeping" || svc === "roc" || svc === "payroll" ? (
-                    <p className="mt-2 text-[11px] text-[var(--color-fg-dim)]">Module coming soon</p>
-                  ) : null}
+                <div key={i} className="flex items-center justify-between gap-3 px-4 py-3">
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-medium text-[var(--color-ink)]">{d.label}</p>
+                    <p className="text-[11px] text-[var(--color-fg-dim)]">{d.detail} · due {fmtDate(d.date)}</p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-3">
+                    {urgency(d.date)}
+                    {action ? (
+                      <Link href={action.href} className="rounded-[8px] bg-[var(--color-brand)] px-3 py-1.5 text-[12px] font-medium text-white hover:bg-[var(--color-brand-strong)]">
+                        {action.label}
+                      </Link>
+                    ) : (
+                      <span className="w-[68px] text-right text-[11px] text-[var(--color-fg-dim)]">tracked</span>
+                    )}
+                  </div>
                 </div>
               );
-            })}
-          </div>
-        </section>
-      )}
+            })
+          )}
+        </div>
+      </section>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
-        {/* Recent documents */}
-        {/* Invoices raised for this client */}
+      {/* Data — what's been raised + what's come in */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <section>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-fg-dim)]">
-              Invoices Raised
-            </h2>
-            <Link href={`/clients/${id}/invoice/new`} className="text-[12px] text-[var(--color-brand)] hover:underline">
-              Raise invoice
-            </Link>
+            <h2 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-fg-dim)]">Invoices Raised</h2>
+            <Link href={`/clients/${id}/invoice/new`} className="text-[12px] text-[var(--color-brand)] hover:underline">Raise invoice</Link>
           </div>
           <div className="card overflow-hidden">
             {invoices.length === 0 ? (
               <div className="flex flex-col items-center gap-2 py-10 text-center text-[var(--color-fg-muted)]">
                 <FilePlus2 className="h-7 w-7 opacity-40" />
                 <p className="text-[13px]">No invoices raised yet</p>
-                <Link href={`/clients/${id}/invoice/new`} className="text-[12px] text-[var(--color-brand)] hover:underline">
-                  Raise the first one
-                </Link>
+                <Link href={`/clients/${id}/invoice/new`} className="text-[12px] text-[var(--color-brand)] hover:underline">Raise the first one</Link>
               </div>
             ) : (
               <table className="w-full">
@@ -200,9 +154,7 @@ export default async function ClientProfile({ params }: { params: Promise<{ id: 
                   {invoices.map((iv) => (
                     <tr key={iv.id} className="border-b border-[var(--color-border)] last:border-0 hover:bg-[var(--color-surface-2)]">
                       <td className="px-4 py-3">
-                        <Link href={`/invoices/${iv.id}`} className="block text-[13px] font-medium text-[var(--color-ink)] hover:text-[var(--color-brand)]">
-                          {iv.invoice_no}
-                        </Link>
+                        <Link href={`/invoices/${iv.id}`} className="block text-[13px] font-medium text-[var(--color-ink)] hover:text-[var(--color-brand)]">{iv.invoice_no}</Link>
                         <p className="text-[11px] text-[var(--color-fg-dim)]">{iv.buyer_name} · {fmtDate(iv.date)}</p>
                       </td>
                       <td className="px-4 py-3 text-right text-[13px] font-semibold tnum text-[var(--color-ink)]">{inr(iv.total) ?? "—"}</td>
@@ -216,86 +168,32 @@ export default async function ClientProfile({ params }: { params: Promise<{ id: 
 
         <section>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-fg-dim)]">
-              Recent Documents
-            </h2>
-            <Link
-              href={`/documents?client=${id}`}
-              className="text-[12px] text-[var(--color-brand)] hover:underline"
-            >
-              View all
-            </Link>
+            <h2 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-fg-dim)]">Recent Documents</h2>
+            <Link href={`/documents?client=${id}`} className="text-[12px] text-[var(--color-brand)] hover:underline">View all</Link>
           </div>
-
           <div className="card overflow-hidden">
             {recentDocs.length === 0 ? (
               <div className="flex flex-col items-center gap-2 py-10 text-center text-[var(--color-fg-muted)]">
                 <FileText className="h-7 w-7 opacity-40" />
                 <p className="text-[13px]">No documents yet</p>
-                <Link href="/documents" className="text-[12px] text-[var(--color-brand)] hover:underline">
-                  Upload documents
-                </Link>
+                <Link href="/documents" className="text-[12px] text-[var(--color-brand)] hover:underline">Upload documents</Link>
               </div>
             ) : (
               <table className="w-full">
                 <tbody>
                   {recentDocs.map((doc) => (
-                    <tr
-                      key={doc.id}
-                      className="border-b border-[var(--color-border)] last:border-0 hover:bg-[var(--color-surface-2)]"
-                    >
+                    <tr key={doc.id} className="border-b border-[var(--color-border)] last:border-0 hover:bg-[var(--color-surface-2)]">
                       <td className="px-4 py-3">
-                        <Link
-                          href={`/documents/${doc.id}`}
-                          className="block text-[13px] font-medium text-[var(--color-ink)] hover:text-[var(--color-brand)] truncate max-w-xs"
-                        >
-                          {doc.filename}
-                        </Link>
+                        <Link href={`/documents/${doc.id}`} className="block max-w-xs truncate text-[13px] font-medium text-[var(--color-ink)] hover:text-[var(--color-brand)]">{doc.filename}</Link>
                         <p className="text-[11px] text-[var(--color-fg-dim)]">{fmtDate(doc.created_at)}</p>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <span className={classificationBadge(doc.classification)}>
-                          {CLASSIFICATION_LABELS[doc.classification]}
-                        </span>
+                        <span className={classificationBadge(doc.classification)}>{CLASSIFICATION_LABELS[doc.classification]}</span>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            )}
-          </div>
-        </section>
-
-        {/* Compliance deadlines sidebar */}
-        <section>
-          <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-fg-dim)]">
-            Upcoming Deadlines
-          </h2>
-          <div className="card divide-y divide-[var(--color-border)]">
-            {allDeadlines.filter((d) => d.status !== "filed").slice(0, 8).length === 0 ? (
-              <p className="px-4 py-6 text-center text-[12px] text-[var(--color-fg-muted)]">
-                No upcoming deadlines
-              </p>
-            ) : (
-              allDeadlines
-                .filter((d) => d.status !== "filed")
-                .slice(0, 8)
-                .map((d, i) => {
-                  const days = daysUntil(d.date);
-                  return (
-                    <div key={i} className="px-4 py-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="text-[13px] font-medium text-[var(--color-ink)] truncate">{d.label}</p>
-                          <p className="text-[11px] text-[var(--color-fg-dim)]">{d.detail}</p>
-                        </div>
-                        <span className={`shrink-0 text-[12px] font-medium ${days < 0 ? "text-[var(--color-alert)]" : days <= 7 ? "text-amber-500" : "text-[var(--color-fg-muted)]"}`}>
-                          {days < 0 ? `${Math.abs(days)}d ago` : `${days}d`}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })
             )}
           </div>
         </section>
