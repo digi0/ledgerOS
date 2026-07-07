@@ -5,6 +5,7 @@ import { isSupabaseConfigured } from "@/lib/supabase";
 import { CLASSIFICATION_LABELS } from "@/lib/types";
 import { inr, timeAgo } from "@/lib/fields";
 import { computeCompliance, daysUntil } from "@/lib/compliance";
+import CountUp from "@/components/CountUp";
 
 export const dynamic = "force-dynamic";
 
@@ -92,7 +93,9 @@ export default async function Dashboard() {
           </div>
         </div>
         <div className="shrink-0 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] px-7 py-5 text-center">
-          <p className="font-display text-3xl text-[var(--color-ink)]">{docs.length}</p>
+          <p className="font-display text-3xl text-[var(--color-ink)] tnum">
+            <CountUp to={docs.length} duration={1.1} separator="," />
+          </p>
           <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-fg-dim)]">
             Documents ingested
           </p>
@@ -123,13 +126,13 @@ export default async function Dashboard() {
 
       {/* stat cards */}
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Active Clients" value={String(clients.length)} sub="all onboarded" />
+        <Stat label="Active Clients" count={clients.length} sub="all onboarded" />
         <Stat
           label="Pending Compliance"
-          value={String(pendingCompliance)}
+          count={pendingCompliance}
           sub={nextDue ? `Next: ${nextDue.label.split(" · ")[0]} · ${fmtDay(nextDue.date)}` : "nothing due soon"}
         />
-        <Stat label="Unmatched Documents" value={String(unmatched)} sub="assign a client from the inbox" />
+        <Stat label="Unmatched Documents" count={unmatched} sub="assign a client from the inbox" />
         <Stat label="ITC at Risk" value={inr(itcAtRisk) ?? "₹0"} sub={`${counts.new} new in inbox`} warn />
       </section>
 
@@ -302,7 +305,9 @@ export default async function Dashboard() {
       <section className="grid gap-4 lg:grid-cols-3">
         <div className="card p-5">
           <h3 className="font-display text-[15px]">Returns on File</h3>
-          <p className="mt-6 font-display text-3xl text-[var(--color-ink)]">{returnsOnFile}</p>
+          <p className="mt-6 font-display text-3xl text-[var(--color-ink)] tnum">
+            <CountUp to={returnsOnFile} duration={1.1} separator="," />
+          </p>
           <p className="mt-1 text-[12px] text-[var(--color-fg-muted)]">
             GST returns ingested · parsed from your uploads
           </p>
@@ -344,12 +349,16 @@ export default async function Dashboard() {
 function Stat({
   label,
   value,
+  count,
   sub,
   ok,
   warn,
 }: {
   label: string;
-  value: string;
+  /** Formatted string value (e.g. currency). */
+  value?: string;
+  /** Integer value — animated with CountUp. Takes precedence over `value`. */
+  count?: number;
   sub: string;
   ok?: boolean;
   warn?: boolean;
@@ -357,7 +366,9 @@ function Stat({
   return (
     <div className="card p-4">
       <p className="text-[12px] text-[var(--color-fg-muted)]">{label}</p>
-      <p className="mt-1.5 font-display text-2xl text-[var(--color-ink)] tnum">{value}</p>
+      <p className="mt-1.5 font-display text-2xl text-[var(--color-ink)] tnum">
+        {count !== undefined ? <CountUp to={count} duration={1.1} separator="," /> : value}
+      </p>
       <p
         className={`mt-1 text-[11px] ${
           ok ? "text-[var(--color-ok)]" : warn ? "text-[var(--color-warn)]" : "text-[var(--color-fg-dim)]"
