@@ -93,7 +93,7 @@ export default function Gstr1Review({
           <div className="flex items-center gap-2 border-b border-[var(--color-border)] px-4 py-3">
             <AlertTriangle className="h-4 w-4 text-amber-500" />
             <h3 className="text-[13px] font-semibold text-[var(--color-ink)]">
-              {flagged.length} invoice{flagged.length === 1 ? "" : "s"} need review
+              {flagged.length} invoice{flagged.length === 1 ? " needs" : "s need"} review
             </h3>
             <span className="text-[12px] text-[var(--color-fg-dim)]">— included, but verify before filing</span>
           </div>
