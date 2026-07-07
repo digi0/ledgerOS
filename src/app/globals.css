@@ -240,3 +240,111 @@ a {
     box-shadow: none;
   }
 }
+
+/* ============================================================
+   DARK MODE — a professional deep-slate (NOT liquid glass).
+   Light stays the default; the toggle adds html.dark, the
+   pre-paint script in layout.tsx avoids a flash.
+
+   Two parts are required for this to actually work everywhere:
+   (1) override the --color-* tokens, AND
+   (2) override the hardcoded white-glass classes (.card,
+       .glass-pill, .btn-glass, active nav) — they DON'T use the
+       tokens, so tokens alone leave every surface washed-out.
+   ============================================================ */
+html.dark {
+  color-scheme: dark;
+
+  /* Surfaces — near-black slate, cards a step lighter than the page */
+  --color-bg: #0b0e14;
+  --color-surface: #141821;
+  --color-surface-2: #1c212c;
+  --color-border: #262c39;
+  --color-border-strong: #353d4d;
+
+  /* Ink / text */
+  --color-ink: #f1f4f9;
+  --color-fg: #dbe0ea;
+  --color-fg-muted: #98a1b2;
+  --color-fg-dim: #6a7385;
+
+  /* Brand stays monochrome slate — light enough to sit above the
+     surfaces so buttons pop, white text stays readable. */
+  --color-brand: #3a4a63;
+  --color-brand-strong: #566988;
+  --color-brand-soft: #1b2536;
+  --color-brand-tint: #161d2b;
+
+  /* Status — brighter on dark, deep soft fills */
+  --color-ok: #34d399;
+  --color-ok-soft: #103127;
+  --color-warn: #fbbf24;
+  --color-warn-soft: #33280f;
+  --color-alert: #fb7185;
+  --color-alert-soft: #351a20;
+  --color-info: #60a5fa;
+  --color-info-soft: #14223c;
+}
+
+/* Page tint on dark — swap the light indigo/sky glow for a subtle deep one. */
+html.dark body {
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 0%,  rgba(99, 102, 241, 0.06) 0%, transparent 65%),
+    radial-gradient(ellipse 60% 60% at 85% 100%, rgba(14, 165, 233, 0.05) 0%, transparent 65%),
+    var(--color-bg);
+}
+
+/* Card — dark frosted glass (was hardcoded white). */
+html.dark .card {
+  background: rgba(24, 29, 39, 0.72);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    0 16px 48px rgba(0, 0, 0, 0.35);
+}
+
+/* Glass pill — dark frosted (was hardcoded white). */
+html.dark .glass-pill {
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Primary glass button — the black border vanishes on dark; use a light one.
+   The gradient rides var(--color-brand), which is already dark-aware. */
+html.dark .btn-glass {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Active nav pill — dark frosted (was hardcoded white glass). */
+html.dark .nav-item[data-active="true"] {
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+/* The printable invoice is a paper document — keep it LIGHT even in dark mode.
+   Re-declare the light palette scoped to the sheet so its text stays readable
+   on white, and force a light card surface. */
+html.dark #invoice-print {
+  color-scheme: light;
+  --color-bg: #f7f8fa;
+  --color-surface: #ffffff;
+  --color-surface-2: #f4f6f9;
+  --color-border: #e7eaef;
+  --color-border-strong: #d7dbe3;
+  --color-ink: #0e1220;
+  --color-fg: #1a2032;
+  --color-fg-muted: #5d6478;
+  --color-fg-dim: #8b93a3;
+  background: #ffffff;
+  color: var(--color-fg);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.07),
+    0 4px 16px rgba(0, 0, 0, 0.06);
+}
