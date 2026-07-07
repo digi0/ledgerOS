@@ -17,7 +17,6 @@ import {
   Users,
 } from "lucide-react";
 import { signOut } from "@/lib/auth-actions";
-import ThemeToggle from "./ThemeToggle";
 
 type Item = {
   href: string;
@@ -140,7 +139,6 @@ export default function Sidebar({
             CA · {clientCount} active client{clientCount === 1 ? "" : "s"}
           </p>
         </div>
-        <ThemeToggle />
         {showSignOut && (
           <form action={signOut}>
             <button
