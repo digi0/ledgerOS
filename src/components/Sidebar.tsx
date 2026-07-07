@@ -27,11 +27,13 @@ type Item = {
 
 export default function Sidebar({
   documentsBadge = 0,
+  complianceBadge = 0,
   firmName = "Your Firm",
   clientCount = 0,
   showSignOut = false,
 }: {
   documentsBadge?: number;
+  complianceBadge?: number;
   firmName?: string;
   clientCount?: number;
   showSignOut?: boolean;
@@ -50,10 +52,10 @@ export default function Sidebar({
     {
       title: "Compliance",
       items: [
-        { href: "/gst", label: "GST", icon: BadgePercent, badge: 7 },
+        { href: "/gst", label: "GST", icon: BadgePercent },
         { href: "/tds", label: "TDS", icon: Landmark },
         { href: "/income-tax", label: "Income Tax", icon: Building2 },
-        { href: "/compliance", label: "Compliance", icon: CalendarCheck2, badge: 4 },
+        { href: "/compliance", label: "Compliance", icon: CalendarCheck2, badge: complianceBadge },
       ],
     },
     {

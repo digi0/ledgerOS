@@ -32,7 +32,11 @@ export default async function Dashboard() {
   const unmatched = docs.filter((d) => !d.client_id).length;
   const gstReturns = docs.filter((d) => d.classification === "gst_return");
   const returnsOnFile = gstReturns.length;
-  const deadlines = computeCompliance({ clients, gstReturns }).slice(0, 4);
+  const allDeadlines = computeCompliance({ clients, gstReturns });
+  // Total unfiled (due + overdue) — the real "pending" count, matched by the
+  // sidebar badge. The preview list below is just the first few.
+  const pendingCompliance = allDeadlines.filter((d) => d.status !== "filed").length;
+  const deadlines = allDeadlines.slice(0, 4);
   const nextDue = deadlines.find((d) => d.status !== "filed");
 
   const fullDate = new Date().toLocaleDateString("en-IN", {
@@ -122,7 +126,7 @@ export default async function Dashboard() {
         <Stat label="Active Clients" value={String(clients.length)} sub="all onboarded" />
         <Stat
           label="Pending Compliance"
-          value={String(deadlines.filter((d) => d.status !== "filed").length)}
+          value={String(pendingCompliance)}
           sub={nextDue ? `Next: ${nextDue.label.split(" · ")[0]} · ${fmtDay(nextDue.date)}` : "nothing due soon"}
         />
         <Stat label="Unmatched Documents" value={String(unmatched)} sub="assign a client from the inbox" />

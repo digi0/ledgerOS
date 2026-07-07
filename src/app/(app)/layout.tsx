@@ -1,14 +1,26 @@
 import Sidebar from "@/components/Sidebar";
 import Topbar from "@/components/Topbar";
 import CopilotFab from "@/components/CopilotFab";
-import { getMe, inboxCounts, listClients } from "@/lib/db";
+import { getMe, inboxCounts, listClients, listDocuments } from "@/lib/db";
+import { computeCompliance } from "@/lib/compliance";
 
 export default async function AppLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const [counts, me, clients] = await Promise.all([inboxCounts(), getMe(), listClients()]);
+  const [counts, me, clients, gstReturns] = await Promise.all([
+    inboxCounts(),
+    getMe(),
+    listClients(),
+    listDocuments({ classification: "gst_return", limit: 200 }),
+  ]);
+  // Real "needs attention" count for the Compliance nav: unfiled deadlines
+  // (due + overdue) from the rules engine — no invented numbers.
+  const pendingCompliance = computeCompliance({ clients, gstReturns }).filter(
+    (d) => d.status !== "filed",
+  ).length;
   return (
     <div className="flex min-h-screen">
       <Sidebar
         documentsBadge={counts.new}
+        complianceBadge={pendingCompliance}
         firmName={me.firmName}
         clientCount={clients.length}
         showSignOut={me.authed}
