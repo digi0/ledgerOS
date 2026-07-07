@@ -119,5 +119,19 @@ console.log("buildClientGstr1 — end to end (mixed inward + outward)");
   check("doc_issue carried through", res.return.doc_issue?.doc_det[0].docs[0].totnum === 2);
 }
 
+console.log("auto docIssue — derived from invoice series (natural sort)");
+{
+  const docs: DocumentRow[] = [
+    doc({ gstin: CLIENT, all_gstins: [CLIENT, BUYER_REG], buyer_name: "A", invoice_number: "G/9", date: "2026-01-06", taxable_value: 5000, cgst: 450, sgst: 450, total: 5900, hsn_codes: ["997212"] }, { id: "a" }),
+    doc({ gstin: CLIENT, all_gstins: [CLIENT, BUYER_REG], buyer_name: "A", invoice_number: "G/30", date: "2026-01-21", taxable_value: 5000, cgst: 450, sgst: 450, total: 5900, hsn_codes: ["997212"] }, { id: "b" }),
+    doc({ gstin: CLIENT, all_gstins: [CLIENT, BUYER_REG], buyer_name: "A", invoice_number: "G/10", date: "2026-01-15", taxable_value: 5000, cgst: 450, sgst: 450, total: 5900, hsn_codes: ["997212"] }, { id: "c" }),
+  ];
+  const res = buildClientGstr1({ client: { gstin: CLIENT, name: "M" }, period: "2026-01", docs });
+  const d = res.return.doc_issue!.doc_det[0].docs[0];
+  check("from = G/9 (natural sort, not lexical G/10)", d.from === "G/9", d.from);
+  check("to = G/30", d.to === "G/30", d.to);
+  check("total issued = 3", d.totnum === 3, String(d.totnum));
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

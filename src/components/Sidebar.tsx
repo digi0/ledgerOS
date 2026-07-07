@@ -6,6 +6,7 @@ import {
   BadgePercent,
   Building2,
   CalendarCheck2,
+  FileJson,
   FileText,
   GitCompareArrows,
   LayoutGrid,
@@ -63,6 +64,10 @@ export default function Sidebar({
         { href: "/gst/reconciliation",   label: "GSTR-2B Recon",    icon: GitCompareArrows },
         { href: "/tds/reconciliation",   label: "26AS Recon",        icon: GitCompareArrows },
       ],
+    },
+    {
+      title: "Exports",
+      items: [{ href: "/gst/gstr1", label: "Generate GSTR-1", icon: FileJson }],
     },
     {
       title: "Firm",

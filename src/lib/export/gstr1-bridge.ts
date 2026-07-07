@@ -146,10 +146,35 @@ export function buildClientGstr1(args: {
     if (warnings.length) flagged.push({ docId: doc.id, filename: doc.filename, messages: warnings });
   }
 
+  // Table 13 (documents issued) is required for filing and derivable from the
+  // outward invoice series — auto-fill it (best-effort) when not supplied.
+  const effectiveDocIssue = docIssue ?? deriveDocIssue(invoices);
+
   return {
-    return: buildGstr1({ supplierGstin: gstin!, period, invoices, docIssue }),
+    return: buildGstr1({ supplierGstin: gstin!, period, invoices, docIssue: effectiveDocIssue }),
     included: invoices.length,
     skipped,
     flagged,
   };
+}
+
+/** Natural comparator so "G/9" sorts before "G/30" (numeric chunks compared as
+ *  numbers, text chunks lexically). */
+function naturalCompare(a: string, b: string): number {
+  const ax = a.match(/\d+|\D+/g) ?? [];
+  const bx = b.match(/\d+|\D+/g) ?? [];
+  for (let i = 0; i < Math.max(ax.length, bx.length); i++) {
+    const x = ax[i] ?? "", y = bx[i] ?? "";
+    const nx = /^\d/.test(x), ny = /^\d/.test(y);
+    const c = nx && ny ? Number(x) - Number(y) : x.localeCompare(y);
+    if (c) return c;
+  }
+  return 0;
+}
+
+/** Best-effort documents-issued summary from the outward invoice numbers. */
+function deriveDocIssue(invoices: Gstr1SalesLine[]): Gstr1Options["docIssue"] | undefined {
+  const nums = invoices.map((i) => i.invoiceNo).filter(Boolean).sort(naturalCompare);
+  if (!nums.length) return undefined;
+  return { from: nums[0], to: nums[nums.length - 1], totalIssued: nums.length, cancelled: 0 };
 }
