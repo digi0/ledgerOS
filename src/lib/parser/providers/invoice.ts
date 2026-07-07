@@ -45,6 +45,10 @@ export const invoiceProvider: Provider = {
     const fields: Record<string, unknown> = {
       vendor_name: vendorName(text),
       gstin: sellerGstin,
+      // All GSTINs on the invoice, seller first. The export layer needs the
+      // counterparty (recipient) too — it can't tell it from the seller alone.
+      all_gstins: gstins,
+      buyer_name: buyerName(text),
       invoice_number: capture(text, /invoice\s*(?:no|number|#)\.?\s*:?\s*([A-Za-z0-9/\-]+)/i),
       date: findDate(text, /invoice\s*date|dated|date/i),
       taxable_value: taxable,
@@ -70,6 +74,13 @@ function vendorName(text: string): string | null {
     .trim();
   if (!candidate || candidate.length > 80) return null;
   return candidate;
+}
+/** Buyer/recipient name from a "Bill To" / "Buyer" / "Consignee" block, if the
+ *  invoice has one. Best-effort — the export bridge keys on GSTIN, not name. */
+function buyerName(text: string): string | null {
+  const m = /(?:bill\s*to|buyer|consignee|billed\s*to)\s*:?\s*\n?\s*([^\n]{2,80})/i.exec(text);
+  const candidate = m?.[1]?.replace(/\s+/g, " ").trim();
+  return candidate && candidate.length > 2 ? candidate : null;
 }
 function clamp(n: number): number {
   return Math.max(0, Math.min(1, n));
