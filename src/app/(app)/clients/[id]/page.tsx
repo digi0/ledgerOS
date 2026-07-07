@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, FileText } from "lucide-react";
-import { getClient, listDocuments } from "@/lib/db";
+import { ArrowLeft, FileText, FilePlus2, FileJson } from "lucide-react";
+import { getClient, listDocuments, listInvoices } from "@/lib/db";
 import { computeCompliance, daysUntil } from "@/lib/compliance";
 import { CLIENT_SERVICES, type ClientService, CLASSIFICATION_LABELS } from "@/lib/types";
-import { classificationBadge, fmtDate } from "@/lib/fields";
+import { classificationBadge, fmtDate, inr } from "@/lib/fields";
 import ClientRowActions from "@/components/ClientRowActions";
 
 export const dynamic = "force-dynamic";
@@ -24,9 +24,10 @@ export default async function ClientProfile({ params }: { params: Promise<{ id: 
   const client = await getClient(id);
   if (!client) notFound();
 
-  const [recentDocs, gstReturnDocs] = await Promise.all([
+  const [recentDocs, gstReturnDocs, invoices] = await Promise.all([
     listDocuments({ clientId: id, limit: 8 }),
     listDocuments({ classification: "gst_return", clientId: id, limit: 100 }),
+    listInvoices(id),
   ]);
 
   const allDeadlines = computeCompliance({
@@ -107,6 +108,22 @@ export default async function ClientProfile({ params }: { params: Promise<{ id: 
         />
       </header>
 
+      {/* Actions — the work you do FOR this client, in one place */}
+      <div className="flex flex-wrap gap-2">
+        <Link
+          href={`/clients/${id}/invoice/new`}
+          className="btn-glass inline-flex items-center gap-2 rounded-[10px] bg-[var(--color-brand)] px-4 py-2 text-[13px] font-medium text-white hover:bg-[var(--color-brand-strong)]"
+        >
+          <FilePlus2 className="h-4 w-4" /> Raise Invoice
+        </Link>
+        <Link
+          href={`/gst/gstr1?client=${id}`}
+          className="inline-flex items-center gap-2 rounded-[10px] border border-[var(--color-border)] px-4 py-2 text-[13px] font-medium text-[var(--color-fg)] hover:bg-[var(--color-surface-2)]"
+        >
+          <FileJson className="h-4 w-4" /> Generate GSTR-1
+        </Link>
+      </div>
+
       {/* Service status cards */}
       {client.services.length > 0 && (
         <section>
@@ -158,6 +175,45 @@ export default async function ClientProfile({ params }: { params: Promise<{ id: 
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
         {/* Recent documents */}
+        {/* Invoices raised for this client */}
+        <section>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-fg-dim)]">
+              Invoices Raised
+            </h2>
+            <Link href={`/clients/${id}/invoice/new`} className="text-[12px] text-[var(--color-brand)] hover:underline">
+              Raise invoice
+            </Link>
+          </div>
+          <div className="card overflow-hidden">
+            {invoices.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 py-10 text-center text-[var(--color-fg-muted)]">
+                <FilePlus2 className="h-7 w-7 opacity-40" />
+                <p className="text-[13px]">No invoices raised yet</p>
+                <Link href={`/clients/${id}/invoice/new`} className="text-[12px] text-[var(--color-brand)] hover:underline">
+                  Raise the first one
+                </Link>
+              </div>
+            ) : (
+              <table className="w-full">
+                <tbody>
+                  {invoices.map((iv) => (
+                    <tr key={iv.id} className="border-b border-[var(--color-border)] last:border-0 hover:bg-[var(--color-surface-2)]">
+                      <td className="px-4 py-3">
+                        <Link href={`/invoices/${iv.id}`} className="block text-[13px] font-medium text-[var(--color-ink)] hover:text-[var(--color-brand)]">
+                          {iv.invoice_no}
+                        </Link>
+                        <p className="text-[11px] text-[var(--color-fg-dim)]">{iv.buyer_name} · {fmtDate(iv.date)}</p>
+                      </td>
+                      <td className="px-4 py-3 text-right text-[13px] font-semibold tnum text-[var(--color-ink)]">{inr(iv.total) ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </section>
+
         <section>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-fg-dim)]">

@@ -10,7 +10,14 @@
 
 import "server-only";
 import { isSupabaseConfigured, serverAdmin, supabaseServer } from "./supabase";
-import type { Client, DocumentRow, DocumentClassification, HandlingStatus } from "./types";
+import type {
+  Client,
+  DocumentRow,
+  DocumentClassification,
+  HandlingStatus,
+  Invoice,
+  InvoiceWithLines,
+} from "./types";
 
 /**
  * Read client: cookie-bound (RLS) when auth is on, service-role when off so
@@ -161,6 +168,53 @@ export async function listClients(): Promise<Pick<Client, "id" | "name" | "gstin
     .order("name", { ascending: true });
   if (error) throw new Error(`listClients: ${error.message}`);
   return (data ?? []) as Pick<Client, "id" | "name" | "gstin">[];
+}
+
+// ---- Generated invoices -------------------------------------------------
+
+/** A client's invoices (newest first), or the firm's if no client given. */
+export async function listInvoices(clientId?: string): Promise<Invoice[]> {
+  if (!isSupabaseConfigured()) return [];
+  const sb = await readClient();
+  let q = sb.from("invoice").select("*").order("date", { ascending: false }).order("seq", { ascending: false });
+  if (clientId) q = q.eq("client_id", clientId);
+  const { data, error } = await q;
+  if (error) throw new Error(`listInvoices: ${error.message}`);
+  return (data ?? []) as Invoice[];
+}
+
+/** One invoice with its line rows, for the detail / PDF view. */
+export async function getInvoice(id: string): Promise<InvoiceWithLines | null> {
+  if (!isSupabaseConfigured()) return null;
+  const sb = await readClient();
+  const { data, error } = await sb
+    .from("invoice")
+    .select("*, lines:invoice_line (*)")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(`getInvoice: ${error.message}`);
+  if (!data) return null;
+  const inv = data as unknown as InvoiceWithLines;
+  inv.lines = [...(inv.lines ?? [])].sort((a, b) => a.line_no - b.line_no);
+  return inv;
+}
+
+/** All invoices for a client WITH lines — the GSTR-1 source for generated data. */
+export async function listInvoicesWithLines(clientId: string): Promise<InvoiceWithLines[]> {
+  if (!isSupabaseConfigured()) return [];
+  const sb = await readClient();
+  const { data, error } = await sb
+    .from("invoice")
+    .select("*, lines:invoice_line (*)")
+    .eq("client_id", clientId)
+    .eq("status", "issued")
+    .order("date", { ascending: false });
+  if (error) throw new Error(`listInvoicesWithLines: ${error.message}`);
+  return (data ?? []).map((inv) => {
+    const i = inv as unknown as InvoiceWithLines;
+    i.lines = [...(i.lines ?? [])].sort((a, b) => a.line_no - b.line_no);
+    return i;
+  });
 }
 
 /**

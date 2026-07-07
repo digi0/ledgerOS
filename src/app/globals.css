@@ -221,3 +221,22 @@ a {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Print: show only the invoice sheet (#invoice-print), hide the app chrome. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #invoice-print,
+  #invoice-print * {
+    visibility: visible;
+  }
+  #invoice-print {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    max-width: none;
+    border: none;
+    box-shadow: none;
+  }
+}

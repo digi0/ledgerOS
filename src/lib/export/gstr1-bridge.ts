@@ -120,9 +120,12 @@ export function buildClientGstr1(args: {
   client: Pick<Client, "gstin" | "name">;
   period: string; // "YYYY-MM"
   docs: DocumentRow[];
+  /** Lines from GENERATED invoices — already structured, no parsing/skipping. */
+  generatedLines?: Gstr1SalesLine[];
   docIssue?: Gstr1Options["docIssue"];
 }): Gstr1BuildResult {
   const { client, period, docs, docIssue } = args;
+  const generatedLines = args.generatedLines ?? [];
   const gstin = client.gstin;
 
   const invoices: Gstr1SalesLine[] = [];
@@ -145,6 +148,9 @@ export function buildClientGstr1(args: {
     invoices.push(line!);
     if (warnings.length) flagged.push({ docId: doc.id, filename: doc.filename, messages: warnings });
   }
+
+  // Generated invoices are already structured — straight in, no skip/flag.
+  invoices.push(...generatedLines);
 
   // Table 13 (documents issued) is required for filing and derivable from the
   // outward invoice series — auto-fill it (best-effort) when not supplied.

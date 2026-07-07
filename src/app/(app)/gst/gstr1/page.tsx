@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { FileJson } from "lucide-react";
-import { getClient, listClients, listDocuments } from "@/lib/db";
+import { getClient, listClients, listDocuments, listInvoicesWithLines } from "@/lib/db";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { buildClientGstr1 } from "@/lib/export/gstr1-bridge";
 import { summarise } from "@/lib/export/gstr1";
+import { invoicesToGstr1Lines } from "@/lib/invoice";
 import PurchaseRegisterFilters from "@/components/PurchaseRegisterFilters";
 import Gstr1Review from "@/components/Gstr1Review";
 
@@ -110,26 +111,31 @@ export default async function Gstr1Page({
     );
   }
 
-  // Scope this client's invoices to the chosen month (invoice date, else received).
+  // Scope this client's parsed invoices to the chosen month (invoice date, else received).
   const allInvoices = await listDocuments({ classification: "invoice", clientId, limit: 1000 });
   const docs = allInvoices.filter((d) => {
     const date = typeof d.extracted_fields.date === "string" ? d.extracted_fields.date : d.created_at;
     return date.startsWith(period);
   });
 
-  const result = buildClientGstr1({ client: { gstin: client.gstin, name: client.name }, period, docs });
+  // Generated invoices for the month — structured at source, no parsing.
+  const generatedInvoices = (await listInvoicesWithLines(clientId)).filter((iv) => iv.date.startsWith(period));
+  const generatedLines = invoicesToGstr1Lines(generatedInvoices);
+
+  const result = buildClientGstr1({ client: { gstin: client.gstin, name: client.name }, period, docs, generatedLines });
   const summary = summarise(result.return);
   const fp = result.return.fp;
 
   return (
     <div className="fade-up space-y-5">
       {header}
-      {docs.length === 0 ? (
+      {docs.length === 0 && generatedInvoices.length === 0 ? (
         <div className="card grid place-items-center p-16 text-center">
           <div className="max-w-md">
             <h2 className="font-display text-lg">No invoices for {client.name} in this month</h2>
             <p className="mt-1 text-[13px] text-[var(--color-fg-muted)]">
-              Upload this client&apos;s sales invoices on the{" "}
+              <Link href={`/clients/${clientId}/invoice/new`} className="text-[var(--color-brand)] hover:underline">Raise an invoice</Link>{" "}
+              for this client, or upload their sales invoices on the{" "}
               <Link href="/documents" className="text-[var(--color-brand)] hover:underline">documents page</Link>{" "}
               — outward invoices for the period appear here.
             </p>
