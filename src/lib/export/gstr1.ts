@@ -10,6 +10,8 @@
  * (b2b / b2cs / hsn / docs) is the government's GSTR-1 offline-tool template.
  */
 
+import { round2, splitGst } from "../gst";
+
 /** Invoice classification the return needs. "R" = Regular B2B, SEZ with /
  *  without payment, Deemed Export. */
 export type Gstr1InvoiceType = "R" | "SEWP" | "SEWOP" | "DE";
@@ -106,10 +108,7 @@ export interface Gstr1Return {
 
 // ── helpers ──────────────────────────────────────────────────────────────
 
-/** Round to 2 decimals (paise) — GSTN rejects longer fractions. */
-function r2(n: number): number {
-  return Math.round((n + Number.EPSILON) * 100) / 100;
-}
+const r2 = round2;
 
 function stateOf(gstin: string): string {
   return gstin.slice(0, 2);
@@ -121,15 +120,10 @@ function gstDate(iso: string): string {
   return m ? `${m[3]}-${m[2]}-${m[1]}` : iso;
 }
 
-/** Split a taxable amount into CGST/SGST (intra-state) or IGST (inter-state)
- *  based on supplier state vs place of supply. */
+/** Split into GSTN's iamt/camt/samt naming via the shared GST helper. */
 function taxSplit(taxable: number, rate: number, supplierState: string, pos: string) {
-  const tax = r2((taxable * rate) / 100);
-  if (pos === supplierState) {
-    const half = r2((taxable * rate) / 200);
-    return { iamt: 0, camt: half, samt: half };
-  }
-  return { iamt: tax, camt: 0, samt: 0 };
+  const { cgst, sgst, igst } = splitGst(taxable, rate, supplierState, pos);
+  return { iamt: igst, camt: cgst, samt: sgst };
 }
 
 // ── builder ──────────────────────────────────────────────────────────────
@@ -146,22 +140,31 @@ export function buildGstr1(opts: Gstr1Options): Gstr1Return {
 
   // ── B2B: group by recipient GSTIN, one inv[] per counterparty ──
   if (b2bLines.length) {
-    const byCtin = new Map<string, B2bInvoice[]>();
+    // Group by recipient, then by invoice number — a single invoice can carry
+    // several rate items (e.g. a generated multi-rate invoice), which GSTN
+    // wants as one inv with multiple itms, NOT repeated invoice numbers.
+    const byCtin = new Map<string, Map<string, B2bInvoice>>();
     for (const i of b2bLines) {
       const split = taxSplit(i.taxableValue, i.rate, supplierState, i.pos);
-      const inv: B2bInvoice = {
-        inum: i.invoiceNo,
-        idt: gstDate(i.invoiceDate),
-        val: r2(i.invoiceValue),
-        pos: i.pos,
-        rchrg: i.reverseCharge ? "Y" : "N",
-        inv_typ: i.invoiceType ?? "R",
-        itms: [{ num: 1, itm_det: { rt: i.rate, txval: r2(i.taxableValue), csamt: r2(i.cess ?? 0), ...split } }],
-      };
       const ctin = i.recipientGstin!;
-      (byCtin.get(ctin) ?? byCtin.set(ctin, []).get(ctin)!).push(inv);
+      const invs = byCtin.get(ctin) ?? byCtin.set(ctin, new Map()).get(ctin)!;
+      const existing = invs.get(i.invoiceNo);
+      const itm_det = { rt: i.rate, txval: r2(i.taxableValue), csamt: r2(i.cess ?? 0), ...split };
+      if (existing) {
+        existing.itms.push({ num: existing.itms.length + 1, itm_det });
+      } else {
+        invs.set(i.invoiceNo, {
+          inum: i.invoiceNo,
+          idt: gstDate(i.invoiceDate),
+          val: r2(i.invoiceValue),
+          pos: i.pos,
+          rchrg: i.reverseCharge ? "Y" : "N",
+          inv_typ: i.invoiceType ?? "R",
+          itms: [{ num: 1, itm_det }],
+        });
+      }
     }
-    ret.b2b = [...byCtin].map(([ctin, inv]) => ({ ctin, inv }));
+    ret.b2b = [...byCtin].map(([ctin, invs]) => ({ ctin, inv: [...invs.values()] }));
   }
 
   // ── B2CS: summarise unregistered supplies by (pos, rate, intra/inter) ──

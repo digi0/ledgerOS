@@ -97,6 +97,61 @@ export interface DocumentRow extends Document {
   client: Pick<Client, "id" | "name"> | null;
 }
 
+// ---- Generated invoices (business-side entry point) ---------------------
+
+export type InvoiceStatus = "draft" | "issued" | "cancelled";
+
+export interface InvoiceLine {
+  id: string;
+  invoice_id: string;
+  line_no: number;
+  description: string;
+  hsn_sac: string | null;
+  qty: number;
+  unit: string | null;
+  rate: number;
+  taxable: number;
+  gst_rate: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
+  cess: number;
+}
+
+export interface Invoice {
+  id: string;
+  firm_id: string;
+  client_id: string;
+  invoice_no: string;
+  fy: string;
+  seq: number;
+  date: string;
+  supplier_name: string;
+  supplier_gstin: string | null;
+  supplier_state: string | null;
+  supplier_address: string | null;
+  buyer_name: string;
+  buyer_gstin: string | null;
+  buyer_address: string | null;
+  place_of_supply: string;
+  reverse_charge: boolean;
+  taxable: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
+  cess: number;
+  total: number;
+  status: InvoiceStatus;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** An invoice with its line rows — what the detail/PDF view renders. */
+export interface InvoiceWithLines extends Invoice {
+  lines: InvoiceLine[];
+}
+
 // ---- Display helpers (label maps used across the UI) --------------------
 
 export const CLASSIFICATION_LABELS: Record<DocumentClassification, string> = {
