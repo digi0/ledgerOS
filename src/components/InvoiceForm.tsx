@@ -22,8 +22,12 @@ const emptyRow = (): Row => ({ description: "", hsn_sac: "", qty: "1", unit: "",
  */
 export default function InvoiceForm({
   client,
+  redirectBase = "/invoices",
 }: {
   client: { id: string; name: string; gstin: string | null };
+  /** Where to land after issuing — the invoice view lives under this path.
+   *  CA side "/invoices", business side "/business/invoices". */
+  redirectBase?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -76,7 +80,7 @@ export default function InvoiceForm({
         buyerName, buyerGstin: buyerGstin.trim() || undefined, buyerAddress: buyerAddress.trim() || undefined,
         placeOfSupply: pos, reverseCharge, notes: notes.trim() || undefined, lines,
       });
-      if (res.ok) router.push(`/invoices/${res.id}`);
+      if (res.ok) router.push(`${redirectBase}/${res.id}`);
       else setError(res.error);
     });
   }

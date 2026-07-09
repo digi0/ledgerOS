@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, FileText, FilePlus2, FileJson, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, FileText, FilePlus2, FileJson, CheckCircle2, Store } from "lucide-react";
 import { getClient, listDocuments, listInvoices } from "@/lib/db";
+import { enterAsBusiness } from "@/lib/business-actions";
 import { computeCompliance, daysUntil, type Deadline } from "@/lib/compliance";
 import { CLIENT_SERVICES, type ClientService, CLASSIFICATION_LABELS } from "@/lib/types";
 import { classificationBadge, fmtDate, inr } from "@/lib/fields";
@@ -91,6 +92,12 @@ export default async function ClientWorkspace({ params }: { params: Promise<{ id
         <Link href={`/gst/gstr1?client=${id}`} className="inline-flex items-center gap-2 rounded-[10px] border border-[var(--color-border)] px-4 py-2 text-[13px] font-medium text-[var(--color-fg)] hover:bg-[var(--color-surface-2)]">
           <FileJson className="h-4 w-4" /> Generate GSTR-1
         </Link>
+        {/* Enter this client's own business-side portal (the two-sided view). */}
+        <form action={enterAsBusiness.bind(null, id)}>
+          <button type="submit" className="inline-flex items-center gap-2 rounded-[10px] border border-[var(--color-border)] px-4 py-2 text-[13px] font-medium text-[var(--color-fg)] hover:bg-[var(--color-surface-2)]">
+            <Store className="h-4 w-4" /> Open business portal
+          </button>
+        </form>
       </div>
 
       {/* Compliance timeline — the spine: what's due, with the action to do it */}
