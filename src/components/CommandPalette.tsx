@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search, LayoutGrid, FileText, Users, BadgePercent, Landmark, Building2,
-  CalendarCheck2, Receipt, GitCompareArrows, FileJson, Sparkles, FilePlus2, ArrowRight,
+  CalendarCheck2, Receipt, GitCompareArrows, FileJson, FileCode, Sparkles, FilePlus2, ArrowRight,
 } from "lucide-react";
 
 type Icon = React.ComponentType<{ className?: string }>;
@@ -50,6 +50,7 @@ export default function CommandPalette({
       ["/tds/register", "TDS Register", Landmark],
       ["/gst/reconciliation", "GSTR-2B Recon", GitCompareArrows],
       ["/tds/reconciliation", "26AS Recon", GitCompareArrows],
+      ["/export/tally", "Export to Tally", FileCode],
       ["/gst/gstr1", "Generate GSTR-1", FileJson],
       ["/copilot", "AI Copilot", Sparkles],
     ];
@@ -60,6 +61,7 @@ export default function CommandPalette({
       { id: `client:${c.id}`, title: c.name, subtitle: c.gstin ?? undefined, group: "Clients", icon: Users, href: `/clients/${c.id}`, primary: true, keywords: c.gstin ?? "" },
       { id: `inv:${c.id}`, title: `Raise invoice — ${c.name}`, group: "Actions", icon: FilePlus2, href: `/clients/${c.id}/invoice/new`, keywords: "new bill gst" },
       { id: `gstr1:${c.id}`, title: `Generate GSTR-1 — ${c.name}`, group: "Actions", icon: FileJson, href: `/gst/gstr1?client=${c.id}`, keywords: "return file outward" },
+      { id: `tally:${c.id}`, title: `Export to Tally — ${c.name}`, group: "Actions", icon: FileCode, href: `/export/tally?client=${c.id}`, keywords: "voucher xml import purchase" },
     ]);
     return [...navCmds, ...clientCmds];
   }, [clients]);

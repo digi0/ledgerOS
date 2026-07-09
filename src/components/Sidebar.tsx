@@ -6,6 +6,7 @@ import {
   BadgePercent,
   Building2,
   CalendarCheck2,
+  FileCode,
   FileJson,
   FileText,
   GitCompareArrows,
@@ -70,7 +71,10 @@ export default function Sidebar({
     },
     {
       title: "Exports",
-      items: [{ href: "/gst/gstr1", label: "Generate GSTR-1", icon: FileJson }],
+      items: [
+        { href: "/export/tally", label: "Export to Tally", icon: FileCode },
+        { href: "/gst/gstr1", label: "Generate GSTR-1", icon: FileJson },
+      ],
     },
     {
       title: "Firm",
