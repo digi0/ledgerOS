@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { getInvoice } from "@/lib/db";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import InvoiceSheet from "@/components/InvoiceSheet";
 import PrintButton from "@/components/PrintButton";
+import Breadcrumbs from "@/components/Breadcrumbs";
 
 export const dynamic = "force-dynamic";
 
@@ -19,9 +18,13 @@ export default async function InvoiceDetail({ params }: { params: Promise<{ id: 
   return (
     <div className="fade-up space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3" data-noprint>
-        <Link href={`/clients/${inv.client_id}`} className="inline-flex items-center gap-1.5 text-[13px] text-[var(--color-fg-muted)] hover:text-[var(--color-ink)]">
-          <ArrowLeft className="h-4 w-4" /> Back to {inv.supplier_name}
-        </Link>
+        <Breadcrumbs
+          items={[
+            { label: "Clients", href: "/clients" },
+            { label: inv.supplier_name, href: `/clients/${inv.client_id}` },
+            { label: inv.invoice_no },
+          ]}
+        />
         <PrintButton />
       </div>
 

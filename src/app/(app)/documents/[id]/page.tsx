@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, FileText } from "lucide-react";
+import { FileText } from "lucide-react";
 import { getDocument, getSignedUrl, listClients } from "@/lib/db";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import { CLASSIFICATION_LABELS } from "@/lib/types";
 import { classificationBadge, fmtDate } from "@/lib/fields";
 import DetailActions from "@/components/DetailActions";
@@ -32,12 +32,7 @@ export default async function DocumentDetail({ params }: { params: Promise<{ id:
 
   return (
     <div className="fade-up space-y-5">
-      <Link
-        href="/"
-        className="inline-flex items-center gap-1.5 text-sm text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
-      >
-        <ArrowLeft className="h-4 w-4" /> Back to inbox
-      </Link>
+      <Breadcrumbs items={[{ label: "Documents", href: "/documents" }, { label: doc.filename }]} />
 
       <header className="flex items-start justify-between gap-4">
         <div className="min-w-0">

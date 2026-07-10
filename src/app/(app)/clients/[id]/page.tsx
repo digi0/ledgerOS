@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, FileText, FilePlus2, FileJson, CheckCircle2, Store } from "lucide-react";
+import { FileText, FilePlus2, FileJson, CheckCircle2, Store } from "lucide-react";
 import { getClient, listDocuments, listInvoices } from "@/lib/db";
 import { enterAsBusiness } from "@/lib/business-actions";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import { computeCompliance, daysUntil, type Deadline } from "@/lib/compliance";
 import { CLIENT_SERVICES, type ClientService, CLASSIFICATION_LABELS } from "@/lib/types";
 import { classificationBadge, fmtDate, inr } from "@/lib/fields";
@@ -51,9 +52,7 @@ export default async function ClientWorkspace({ params }: { params: Promise<{ id
 
   return (
     <div className="fade-up space-y-6">
-      <Link href="/clients" className="inline-flex items-center gap-1.5 text-sm text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]">
-        <ArrowLeft className="h-4 w-4" /> Back to Clients
-      </Link>
+      <Breadcrumbs items={[{ label: "Clients", href: "/clients" }, { label: client.name }]} />
 
       {/* Header */}
       <header className="flex items-start justify-between gap-4">

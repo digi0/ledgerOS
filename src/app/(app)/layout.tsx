@@ -26,7 +26,14 @@ export default async function AppLayout({ children }: Readonly<{ children: React
         showSignOut={me.authed}
       />
       <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-        <Topbar userName={me.firstName} clients={clients} />
+        <Topbar
+          userName={me.firstName}
+          clients={clients}
+          documentsBadge={counts.new}
+          complianceBadge={pendingCompliance}
+          firmName={me.firmName}
+          showSignOut={me.authed}
+        />
         <main className="mx-auto w-full max-w-[1280px] flex-1 px-6 py-6 lg:px-8">{children}</main>
       </div>
       <CopilotFab />

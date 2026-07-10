@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Download, AlertTriangle, MinusCircle, CheckCircle2 } from "lucide-react";
 import { inr } from "@/lib/fields";
+import { toast } from "@/components/Toast";
 import type { Gstr1Summary } from "@/lib/export/gstr1";
 
 interface SkipItem { docId: string; filename: string; reason: string }
@@ -44,6 +45,7 @@ export default function Gstr1Review({
     a.click();
     URL.revokeObjectURL(url);
     setDownloaded(true);
+    toast.success(`GSTR-1 for ${fp} downloaded`);
   }
 
   const cards = [

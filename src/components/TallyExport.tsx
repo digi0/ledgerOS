@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Download, AlertTriangle, CheckCircle2, BookOpen } from "lucide-react";
 import { inr } from "@/lib/fields";
+import { toast } from "@/components/Toast";
 import type { TallyMaster } from "@/lib/export/tally";
 
 interface WarnItem { docId: string; reference: string | null; party: string | null; messages: string[] }
@@ -44,6 +45,7 @@ export default function TallyExport({
     a.click();
     URL.revokeObjectURL(url);
     setDownloaded(true);
+    toast.success(`${fileName} downloaded · ${voucherCount} voucher${voucherCount === 1 ? "" : "s"}`);
   }
 
   const cards = [

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Sparkles, TriangleAlert } from "lucide-react";
+import { Sparkles, TriangleAlert, Inbox, CalendarClock, UserPlus, ArrowRight, CheckCircle2 } from "lucide-react";
 import { getMe, inboxCounts, listClients, listDocuments } from "@/lib/db";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { CLASSIFICATION_LABELS } from "@/lib/types";
@@ -40,6 +40,55 @@ export default async function Dashboard() {
   const deadlines = allDeadlines.slice(0, 4);
   const nextDue = deadlines.find((d) => d.status !== "filed");
 
+  // "Needs you today" — the actionable priorities, most urgent first. Only
+  // real, data-derived items make the list; an empty list is the all-clear.
+  const overdue = allDeadlines.filter((d) => d.status === "overdue").length;
+  const priorities = [
+    overdue > 0 && {
+      href: "/compliance",
+      icon: TriangleAlert,
+      tone: "alert" as const,
+      title: `${overdue} filing${overdue === 1 ? "" : "s"} overdue`,
+      sub: "past due — file as soon as possible",
+    },
+    counts.new > 0 && {
+      href: "/documents",
+      icon: Inbox,
+      tone: "brand" as const,
+      title: `${counts.new} document${counts.new === 1 ? "" : "s"} to process`,
+      sub: "AI-classified and waiting in the inbox",
+    },
+    unmatched > 0 && {
+      href: "/documents",
+      icon: UserPlus,
+      tone: "warn" as const,
+      title: `${unmatched} unmatched document${unmatched === 1 ? "" : "s"}`,
+      sub: "assign a client so they file correctly",
+    },
+    nextDue && {
+      href: "/compliance",
+      icon: CalendarClock,
+      tone: "warn" as const,
+      title: `Next filing: ${nextDue.label.split(" · ")[0]}`,
+      sub: `due ${fmtDay(nextDue.date)} · ${daysUntil(nextDue.date)} day${daysUntil(nextDue.date) === 1 ? "" : "s"}`,
+    },
+    itcAtRisk > 0 && {
+      href: "/documents?type=notice",
+      icon: TriangleAlert,
+      tone: "alert" as const,
+      title: `${inr(itcAtRisk)} ITC at risk`,
+      sub: "open notices need a response",
+    },
+  ]
+    .filter(Boolean)
+    .slice(0, 4) as { href: string; icon: typeof Inbox; tone: "alert" | "warn" | "brand"; title: string; sub: string }[];
+
+  const toneRing = {
+    alert: "bg-[var(--color-alert-soft)] text-[var(--color-alert)]",
+    warn: "bg-[var(--color-warn-soft)] text-[var(--color-warn)]",
+    brand: "bg-[var(--color-brand)]/10 text-[var(--color-brand)]",
+  };
+
   const fullDate = new Date().toLocaleDateString("en-IN", {
     weekday: "long",
     day: "numeric",
@@ -55,50 +104,62 @@ export default async function Dashboard() {
         </p>
       </header>
 
-      {/* welcome */}
-      <section className="card flex flex-col gap-6 p-6 lg:flex-row lg:items-center lg:justify-between">
+      {/* Needs you today — lead with what actually needs action */}
+      <section className="card flex flex-col gap-5 p-6 lg:flex-row lg:justify-between">
         <div className="min-w-0 flex-1">
-          <h2 className="font-display text-lg">Welcome to LedgerOS, {me.firmName}.</h2>
-          <p className="mt-1 max-w-2xl text-[var(--color-fg-muted)]">
-            Your workspace is live — wired to your real Supabase data. Three quick ways to see how
-            LedgerOS handles your workflow:
-          </p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            {[
-              {
-                href: "/documents",
-                n: 1,
-                title: `Process ${counts.new} documents`,
-                sub: "AI-classified inbox · one click",
-              },
-              { href: "/copilot", n: 2, title: "Ask the copilot", sub: "grounded in your documents" },
-              { href: "/clients", n: 3, title: "Add your clients", sub: "uploads auto-match to them" },
-            ].map((c) => (
-              <Link
-                key={c.n}
-                href={c.href}
-                className="group flex items-start gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 hover:border-[var(--color-border-strong)]"
-              >
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[var(--color-brand)] text-[11px] font-semibold text-white">
-                  {c.n}
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-[13px] font-semibold text-[var(--color-ink)]">
-                    {c.title}
-                  </span>
-                  <span className="block text-[11px] text-[var(--color-fg-dim)]">{c.sub}</span>
-                </span>
-              </Link>
-            ))}
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="font-display text-lg">Needs you today</h2>
+            {priorities.length > 0 && (
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-fg-dim)]">
+                {priorities.length} item{priorities.length === 1 ? "" : "s"}
+              </span>
+            )}
           </div>
+
+          {priorities.length === 0 ? (
+            <div className="mt-3 flex items-center gap-3 rounded-xl bg-[var(--color-ok-soft)] px-4 py-3.5">
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-[var(--color-ok)]" />
+              <div>
+                <p className="text-[14px] font-medium text-[var(--color-ink)]">You&apos;re all caught up</p>
+                <p className="text-[12px] text-[var(--color-fg-muted)]">
+                  No overdue filings, nothing waiting in the inbox. Nice.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-3 space-y-2">
+              {priorities.map((p) => {
+                const Icon = p.icon;
+                return (
+                  <Link
+                    key={p.title}
+                    href={p.href}
+                    className="group flex items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-3 hover:border-[var(--color-border-strong)]"
+                  >
+                    <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${toneRing[p.tone]}`}>
+                      <Icon className="h-4.5 w-4.5" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[13.5px] font-semibold text-[var(--color-ink)]">{p.title}</span>
+                      <span className="block truncate text-[12px] text-[var(--color-fg-dim)]">{p.sub}</span>
+                    </span>
+                    <ArrowRight className="h-4 w-4 shrink-0 text-[var(--color-fg-dim)] transition-transform group-hover:translate-x-0.5 group-hover:text-[var(--color-brand)]" />
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
-        <div className="shrink-0 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] px-7 py-5 text-center">
-          <p className="font-display text-3xl text-[var(--color-ink)] tnum">
-            <CountUp to={docs.length} duration={1.1} separator="," />
-          </p>
-          <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-fg-dim)]">
-            Documents ingested
-          </p>
+
+        <div className="grid shrink-0 place-items-center self-stretch rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] px-7 py-5 text-center lg:w-44">
+          <div>
+            <p className="font-display text-3xl text-[var(--color-ink)] tnum">
+              <CountUp to={docs.length} duration={1.1} separator="," />
+            </p>
+            <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-fg-dim)]">
+              Documents ingested
+            </p>
+          </div>
         </div>
       </section>
 

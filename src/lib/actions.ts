@@ -18,7 +18,33 @@ async function mutationClient() {
 
 function refresh(id?: string) {
   revalidatePath("/");
+  revalidatePath("/documents");
   if (id) revalidatePath(`/documents/${id}`);
+}
+
+export type BulkResult = { ok: true; count: number } | { ok: false; error: string };
+
+/** Mark many documents' handling at once (inbox bulk action). */
+export async function bulkSetHandling(ids: string[], handling: HandlingStatus): Promise<BulkResult> {
+  if (!ids.length) return { ok: false, error: "Nothing selected." };
+  const sb = await mutationClient();
+  const { error } = await sb.from("document").update({ handling }).in("id", ids);
+  if (error) return { ok: false, error: error.message };
+  refresh();
+  return { ok: true, count: ids.length };
+}
+
+/** Assign (or unassign) a client for many documents at once. */
+export async function bulkReassignClient(ids: string[], clientId: string | null): Promise<BulkResult> {
+  if (!ids.length) return { ok: false, error: "Nothing selected." };
+  const sb = await mutationClient();
+  const { error } = await sb
+    .from("document")
+    .update({ client_id: clientId, status: clientId ? "matched" : "classified" })
+    .in("id", ids);
+  if (error) return { ok: false, error: error.message };
+  refresh();
+  return { ok: true, count: ids.length };
 }
 
 export async function setHandling(id: string, handling: HandlingStatus) {

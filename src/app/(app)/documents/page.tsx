@@ -2,7 +2,7 @@ import Link from "next/link";
 import { inboxCounts, listClients, listDocuments } from "@/lib/db";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import type { DocumentClassification, HandlingStatus } from "@/lib/types";
-import DocumentRow from "@/components/DocumentRow";
+import InboxList from "@/components/InboxList";
 import InboxFilters from "@/components/InboxFilters";
 import UploadDocument from "@/components/UploadDocument";
 import WorkingFolder from "@/components/WorkingFolder";
@@ -97,7 +97,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: SP
             No documents match these filters.
           </p>
         ) : (
-          docs.map((d) => <DocumentRow key={d.id} doc={d} />)
+          <InboxList docs={docs} clients={clients} />
         )}
       </div>
     </div>

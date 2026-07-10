@@ -8,6 +8,7 @@ import { stateCode, financialYear } from "@/lib/gst";
 import { STATE_CODES } from "@/lib/parser/extractors/india";
 import { createInvoice } from "@/lib/invoice-actions";
 import { inr } from "@/lib/fields";
+import { toast } from "@/components/Toast";
 
 const GSTIN_RE = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][0-9A-Z]Z[0-9A-Z]$/;
 const GST_RATES = [0, 5, 12, 18, 28];
@@ -80,8 +81,13 @@ export default function InvoiceForm({
         buyerName, buyerGstin: buyerGstin.trim() || undefined, buyerAddress: buyerAddress.trim() || undefined,
         placeOfSupply: pos, reverseCharge, notes: notes.trim() || undefined, lines,
       });
-      if (res.ok) router.push(`${redirectBase}/${res.id}`);
-      else setError(res.error);
+      if (res.ok) {
+        toast.success(`Invoice ${res.invoiceNo} issued`);
+        router.push(`${redirectBase}/${res.id}`);
+      } else {
+        setError(res.error);
+        toast.error(res.error);
+      }
     });
   }
 
