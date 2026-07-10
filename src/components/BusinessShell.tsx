@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, FileText, LogOut } from "lucide-react";
+import { LayoutGrid, FileText, ArrowLeftRight } from "lucide-react";
 import { exitBusiness } from "@/lib/business-actions";
 import ThemeToggle from "./ThemeToggle";
 
@@ -66,11 +66,11 @@ export default function BusinessShell({
             <form action={exitBusiness}>
               <button
                 type="submit"
-                aria-label="Switch business"
-                title="Switch business"
-                className="grid h-8 w-8 place-items-center rounded-lg text-[var(--color-fg-dim)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-ink)]"
+                title="Switch to a different business"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-[12px] font-medium text-[var(--color-fg-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-ink)]"
               >
-                <LogOut className="h-4 w-4" />
+                <ArrowLeftRight className="h-3.5 w-3.5 shrink-0" />
+                <span className="hidden sm:inline">Switch business</span>
               </button>
             </form>
           </div>
