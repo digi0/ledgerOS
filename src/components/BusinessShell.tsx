@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, FileText, ArrowLeftRight } from "lucide-react";
+import { LayoutGrid, FileText, ArrowLeftRight, Building2 } from "lucide-react";
 import { exitBusiness } from "@/lib/business-actions";
 import ThemeToggle from "./ThemeToggle";
 
@@ -62,6 +62,16 @@ export default function BusinessShell({
                 );
               })}
             </nav>
+            {/* Back to the CA workspace — keeps the business session, unlike
+                Switch business which clears it. */}
+            <Link
+              href="/"
+              title="Back to the firm workspace"
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-[var(--color-fg-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-ink)]"
+            >
+              <Building2 className="h-3.5 w-3.5 shrink-0" />
+              <span className="hidden md:inline">Firm workspace</span>
+            </Link>
             <ThemeToggle />
             <form action={exitBusiness}>
               <button
