@@ -34,18 +34,18 @@ export default function BusinessShell({
       <header className="sticky top-0 z-20 border-b border-[var(--color-border)] bg-[var(--color-surface)]/95 backdrop-blur">
         <div className="mx-auto flex w-full max-w-[1080px] items-center justify-between gap-4 px-6 py-3">
           {/* Brand + business identity */}
-          <div className="flex items-center gap-3">
-            <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-[var(--color-brand)] font-display text-sm text-white">L</span>
-            <div className="leading-tight">
-              <p className="text-[14px] font-semibold text-[var(--color-ink)]">{businessName}</p>
-              <p className="text-[11px] text-[var(--color-fg-dim)]">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[9px] bg-[var(--color-brand)] font-display text-sm text-white">L</span>
+            <div className="min-w-0 leading-tight">
+              <p className="truncate text-[14px] font-semibold text-[var(--color-ink)]">{businessName}</p>
+              <p className="truncate text-[11px] text-[var(--color-fg-dim)]">
                 {gstin ? <span className="font-mono">{gstin}</span> : "No GSTIN on file"} · books shared with {firmName}
               </p>
             </div>
           </div>
 
           {/* Nav + actions */}
-          <div className="flex items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1">
             <nav className="mr-2 hidden items-center gap-1 sm:flex">
               {nav.map((it) => {
                 const Icon = it.icon;
