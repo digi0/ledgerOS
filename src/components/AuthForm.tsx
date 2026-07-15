@@ -29,7 +29,10 @@ export default function AuthForm({ mode, next }: { mode: "signin" | "signup"; ne
     <form action={formAction} className="space-y-3">
       {next && <input type="hidden" name="next" value={next} />}
       {mode === "signup" && (
-        <input name="fullName" placeholder="Full name" autoComplete="name" className={input} />
+        <>
+          <input name="fullName" placeholder="Full name" autoComplete="name" className={input} />
+          <input name="firmName" placeholder="Firm / practice name" autoComplete="organization" className={input} />
+        </>
       )}
       <input
         name="email"

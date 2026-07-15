@@ -41,7 +41,8 @@ export async function uploadAndParse(formData: FormData): Promise<UploadResult> 
 
   const authEnabled = process.env.NEXT_PUBLIC_AUTH_ENABLED === "true";
   const sb = authEnabled ? await supabaseServer() : serverAdmin();
-  const firmId = (authEnabled ? await currentFirmId() : null) ?? DEMO_FIRM_ID;
+  const firmId = authEnabled ? await currentFirmId() : DEMO_FIRM_ID;
+  if (!firmId) throw new Error("Not signed in to a firm — sign in before uploading documents.");
 
   const bytes = new Uint8Array(await file.arrayBuffer());
 

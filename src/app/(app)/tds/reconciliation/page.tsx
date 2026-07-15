@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { serverAdmin } from "@/lib/supabase";
+import { currentFirmId } from "@/lib/supabase";
 import { DEMO_FIRM_ID } from "@/lib/constants";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import { listDocuments, listClients } from "@/lib/db";
+import { listDocuments, listClients, readClient } from "@/lib/db";
 import { inr } from "@/lib/fields";
 import { TDS_SECTIONS } from "@/lib/parser/extractors/india";
 import { reconcile26as, type Recon26asRow, type ReconStatus26as } from "@/lib/form26as";
@@ -105,13 +105,14 @@ export default async function TdsReconciliationPage({
       : Promise.resolve([]),
   ]);
 
-  // Fetch Form 26AS entries from DB
-  const sb = serverAdmin();
-  const { data: asRows } = clientId && filterFy
+  // Fetch Form 26AS entries — RLS-scoped when auth is on; demo firm otherwise.
+  const sb = await readClient();
+  const firmId = process.env.NEXT_PUBLIC_AUTH_ENABLED === "true" ? await currentFirmId() : DEMO_FIRM_ID;
+  const { data: asRows } = clientId && filterFy && firmId
     ? await sb
         .from("form26as_entry")
         .select("*")
-        .eq("firm_id", DEMO_FIRM_ID)
+        .eq("firm_id", firmId)
         .eq("client_id", clientId)
         .eq("fy", filterFy)
     : { data: [] };

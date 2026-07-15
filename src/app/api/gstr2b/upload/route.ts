@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { serverAdmin } from "@/lib/supabase";
+import { serverAdmin, currentFirmId } from "@/lib/supabase";
 import { DEMO_FIRM_ID } from "@/lib/constants";
 import { parseGstr2bJson } from "@/lib/gstr2b";
 
@@ -31,7 +31,10 @@ export async function POST(req: NextRequest) {
     }
 
     const authEnabled = process.env.NEXT_PUBLIC_AUTH_ENABLED === "true";
-    const firmId = authEnabled ? null : DEMO_FIRM_ID; // extend with currentFirmId() when auth lands
+    const firmId = authEnabled ? await currentFirmId() : DEMO_FIRM_ID;
+    if (!firmId) {
+      return NextResponse.json({ error: "Not signed in to a firm." }, { status: 401 });
+    }
 
     const sb = serverAdmin();
 
