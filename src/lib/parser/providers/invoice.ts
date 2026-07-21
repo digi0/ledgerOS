@@ -1,11 +1,13 @@
 import type { Provider } from "../types";
+import { clamp, prune } from "./util";
 import {
-  capture,
   findAmountNear,
   findAmounts,
-  findDate,
   findGstins,
   findHsnCodes,
+  findInvoiceDate,
+  findInvoiceNumber,
+  splitParties,
   stateFromGstin,
 } from "../extractors/india";
 
@@ -30,7 +32,10 @@ export const invoiceProvider: Provider = {
 
   parse(text) {
     const gstins = findGstins(text);
-    const sellerGstin = gstins[0] ?? null;
+    const parties = splitParties(text);
+    const sellerGstin = parties.seller.gstin;
+    const invoiceNo = findInvoiceNumber(text);
+    const invoiceDate = findInvoiceDate(text);
     const cgst = findAmountNear(text, /cgst/i);
     const sgst = findAmountNear(text, /sgst/i);
     const igst = findAmountNear(text, /igst/i);
@@ -43,14 +48,22 @@ export const invoiceProvider: Provider = {
       null;
 
     const fields: Record<string, unknown> = {
-      vendor_name: vendorName(text),
+      vendor_name: parties.seller.name,
       gstin: sellerGstin,
-      // All GSTINs on the invoice, seller first. The export layer needs the
-      // counterparty (recipient) too — it can't tell it from the seller alone.
+      // All GSTINs on the invoice. The export layer needs the counterparty too.
       all_gstins: gstins,
-      buyer_name: buyerName(text),
-      invoice_number: capture(text, /invoice\s*(?:no|number|#)\.?\s*:?\s*([A-Za-z0-9/\-]+)/i),
-      date: findDate(text, /invoice\s*date|dated|date/i),
+      buyer_name: parties.buyer.name,
+      buyer_gstin: parties.buyer.gstin,
+      // false ⇒ roles were guessed from text order, not read off a label.
+      // The GSTR-1 bridge refuses these rather than risk filing a purchase
+      // as a sale; the inbox surfaces them for a human to confirm.
+      _party_roles_confident: parties.confident,
+      invoice_number: invoiceNo.value,
+      date: invoiceDate.value,
+      // false ⇒ the label was vague or rivals disagreed. GSTR-1 keys on both,
+      // so the bridge refuses these rather than file the wrong one.
+      _invoice_number_confident: invoiceNo.confident,
+      _date_confident: invoiceDate.confident,
       taxable_value: taxable,
       cgst,
       sgst,
@@ -65,28 +78,3 @@ export const invoiceProvider: Provider = {
   },
 };
 
-/** Seller name: the text before the first invoice marker. Works whether the
- *  PDF preserved line breaks or flattened everything onto one line. */
-function vendorName(text: string): string | null {
-  const head = text.split(/tax invoice|invoice\s*(?:no|date|#)|gstin/i)[0]?.trim() ?? "";
-  const candidate = (head.split("\n").map((l) => l.trim()).find((l) => l.length > 2) ?? head)
-    .replace(/\s+/g, " ")
-    .trim();
-  if (!candidate || candidate.length > 80) return null;
-  return candidate;
-}
-/** Buyer/recipient name from a "Bill To" / "Buyer" / "Consignee" block, if the
- *  invoice has one. Best-effort — the export bridge keys on GSTIN, not name. */
-function buyerName(text: string): string | null {
-  const m = /(?:bill\s*to|buyer|consignee|billed\s*to)\s*:?\s*\n?\s*([^\n]{2,80})/i.exec(text);
-  const candidate = m?.[1]?.replace(/\s+/g, " ").trim();
-  return candidate && candidate.length > 2 ? candidate : null;
-}
-function clamp(n: number): number {
-  return Math.max(0, Math.min(1, n));
-}
-function prune(o: Record<string, unknown>): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(o).filter(([, v]) => v != null && !(Array.isArray(v) && v.length === 0)),
-  );
-}
