@@ -1,8 +1,9 @@
 "use client";
 
 import { useTransition } from "react";
-import { Check } from "lucide-react";
-import { reassignClient, reclassify, setHandling } from "@/lib/actions";
+import { Check, RefreshCw } from "lucide-react";
+import { reassignClient, reclassify, reparseDocument, setHandling } from "@/lib/actions";
+import { toast } from "@/components/Toast";
 import {
   CLASSIFICATION_LABELS,
   HANDLING_LABELS,
@@ -97,6 +98,31 @@ export default function DetailActions({
             </option>
           ))}
         </select>
+      </div>
+
+      {/* re-parse — replays the current parser over the stored original */}
+      <div className="border-t border-[var(--color-border)] pt-4">
+        <button
+          disabled={pending}
+          onClick={() =>
+            start(async () => {
+              const res = await reparseDocument(id);
+              if (!res.ok) toast.error(res.error ?? "Re-parse failed.");
+              else if (res.changed.length === 0) toast.success("Already up to date.");
+              else
+                toast.success(
+                  `Updated ${res.changed.join(", ")}` +
+                    (res.preserved.length ? ` · kept your edits to ${res.preserved.join(", ")}` : ""),
+                );
+            })
+          }
+          className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm font-medium text-[var(--color-fg)] hover:bg-[var(--color-surface-2)] disabled:opacity-50"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${pending ? "animate-spin" : ""}`} /> Re-parse
+        </button>
+        <p className="mt-1.5 text-[11px] text-[var(--color-fg-dim)]">
+          Re-reads the original PDF. Your manual field edits are kept.
+        </p>
       </div>
     </div>
   );

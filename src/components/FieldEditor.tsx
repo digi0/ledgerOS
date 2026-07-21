@@ -17,7 +17,9 @@ export default function FieldEditor({
   id: string;
   fields: Record<string, unknown>;
 }) {
-  const entries = Object.entries(fields ?? {});
+  // "_"-prefixed keys are parser/bookkeeping metadata (confidence flags, the
+  // manual-override ledger) — not values a CA should see or edit.
+  const entries = Object.entries(fields ?? {}).filter(([k]) => !k.startsWith("_"));
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
