@@ -2,78 +2,92 @@
 
 The operating system for modern CA practices — by Precedal.
 
-This repo is the backend for LedgerOS. We're building **tool-by-tool**, starting
-with **Tool 1 — Document Ingestion**: pull from Gmail, OCR, AI-classify, match
-to client, route into downstream modules.
+A CA firm's workflow is one line: **documents in → matched to a client →
+reconciled → filed.** LedgerOS is that line, with the deterministic parsing and
+the export formats the Indian compliance stack actually needs.
 
 ## Stack
 
-- **FastAPI** (HTTP API) + **Pydantic v2**
-- **PostgreSQL 16** (via SQLAlchemy 2.0 + Alembic)
-- **Celery + Redis** (ingestion pipeline)
-- **MinIO** locally / **S3** in prod (document storage)
-- **Anthropic Claude** (classification + extraction)
-- **Gmail API** (first inbox connector)
+- **Next.js 16** (App Router, server actions) + **React 19**
+- **Supabase** — Postgres (RLS, firm-scoped), Storage, Auth
+- **Tailwind v4** (design tokens in `src/app/globals.css`)
+- **unpdf** — serverless-safe PDF text extraction
+- **Anthropic Claude** — the copilot only; document parsing is deterministic
 
 ## Repo layout
 
 ```
-app/
-  api/         FastAPI routers (health, documents, gmail oauth)
-  models/      SQLAlchemy models (firm, user, client, email_account,
-               ingested_email, document)
-  schemas/     Pydantic response shapes
-  services/    Gmail connector, OCR, classifier, client matcher
-  storage.py   S3/MinIO client
-  db.py        SQLAlchemy engine + session
-  config.py    Settings (pydantic-settings, reads .env)
-  main.py      FastAPI factory
-worker/
-  celery_app.py
-  tasks.py     5-step pipeline (pull → extract → classify → match → finalize)
-migrations/    Alembic
-docker-compose.yml   Postgres + Redis + MinIO for local dev
+src/
+  app/
+    (app)/        CA workspace — inbox, clients, client/period, registers, exports
+    business/     client-facing portal (a business raises its own invoices)
+    api/          upload routes for GSTR-2B / Form 26AS
+  lib/
+    parser/       deterministic document parser (no LLM, no network)
+      providers/    one per document kind, each scores its own confidence
+      extractors/   India knowledge base — GSTIN/PAN, INR, dates, TDS sections
+    export/       Tally XML, GSTR-1 JSON, and the document→line bridges
+    db.ts         all Supabase reads
+    *-actions.ts  server actions (mutations)
+  components/
+supabase/
+  migrations/     schema, applied with scripts/db-exec.mjs
+  seed/           demo firm + clients
+scripts/          dev utilities and the test suites
 ```
 
-## Quickstart (local dev)
+## Quickstart
 
-Prerequisites: Python 3.12+, Docker.
+Prerequisites: Node 20+, a Supabase project.
 
 ```bash
-cp .env.example .env       # then edit values as needed
-make install               # creates .venv, installs deps
-make up                    # starts Postgres + Redis + MinIO
-make revision m="init"     # autogenerate first migration from models
-make migrate               # apply it
-make api                   # FastAPI on http://localhost:8000
-make worker                # Celery worker (separate terminal)
+npm install
+cp .env.example .env.local        # fill in the Supabase values
+node scripts/db-exec.mjs supabase/migrations/*.sql
+node scripts/setup-storage.mjs    # creates the private `documents` bucket
+npm run dev
 ```
 
-Check `http://localhost:8000/health` and `http://localhost:8000/docs`.
+`NEXT_PUBLIC_AUTH_ENABLED=false` (the default) leaves the route guard
+pass-through and serves the seeded demo firm, so local dev needs no login.
 
-MinIO console: `http://localhost:9001` (user/pass from `.env`).
+## Tests
 
-## What's done
+Plain assertion scripts — no framework. Each guards a specific past bug.
 
-- Repo scaffold, infra (Postgres/Redis/MinIO), settings, Alembic.
-- Data model for Tool 1: `firm`, `user`, `client`, `email_account`,
-  `ingested_email`, `document`.
-- Read APIs for documents (list + detail).
-- Celery app + pipeline task skeletons (NotImplementedError bodies — fill in
-  as we build).
+```bash
+npx tsx scripts/test-parties.ts      # buyer/seller role assignment
+npx tsx scripts/test-labelled.ts     # invoice number + date extraction
+npx tsx scripts/test-reparse.ts      # re-parse merge (must not clobber manual edits)
+npx tsx scripts/test-invoice.ts      # invoice → GSTR-1 lines
+npx tsx scripts/test-voucher.ts      # canonical voucher + CSV
+npx tsx scripts/test-gstr1.ts        # GSTR-1 JSON shape
+npx tsx scripts/test-gstr1-bridge.ts # document → GSTR-1 bridge
+npx tsx scripts/test-tally.ts        # Tally XML
+```
 
-## What's next (Tool 1, in order)
+## The parser
 
-1. Gmail OAuth: implement `app/services/gmail.py`, wire `/auth/gmail/start`
-   and `/auth/gmail/callback`, persist tokens on `EmailAccount`.
-2. Polling worker that pulls new messages per active `EmailAccount`.
-3. `extract_attachments` → S3 + `Document` rows + OCR (`pypdf` for text PDFs,
-   Tesseract/hosted OCR for the rest).
-4. `classify` → Claude call returning `{classification, confidence, fields}`.
-5. `match_to_client` → already drafted in `app/services/matcher.py`.
-6. End-to-end smoke test with real forwarded emails.
+Deterministic by design — regex and a domain knowledge base, no LLM. Field roles
+are read off the labels an invoice legally must carry, never inferred from
+position in the text stream: `pdf.js` emits text in draw order, so a two-column
+header can put the buyer's block first, and guessing by position silently swaps
+the parties.
 
-## Roadmap (after Tool 1 ships)
+When a label is missing or rivals disagree, the parser records low confidence
+rather than guessing. `src/lib/export/gstr1-bridge.ts` refuses those documents so
+an ambiguous invoice becomes a review item instead of a wrong return at the
+portal. Ambiguity is surfaced, never averaged away.
 
-Tool 2 Clients → Tool 3 GST recon → Tool 4 TDS / 26AS → Tool 5 ITR prep →
-Tool 6 Compliance calendar → Tool 7 AI Copilot.
+Re-parsing a stored document (`scripts/reparse.ts`, or the button on the document
+page) preserves the client assignment, the handling state, and every field a
+human corrected by hand.
+
+## Status
+
+Live: document ingestion + parsing, client matching, purchase register, GSTR-2B
+and Form 26AS reconciliation, TDS register, Tally export, GSTR-1 generation,
+invoicing (both sides), compliance calendar, AI copilot.
+
+`legacy/` is a superseded FastAPI/Celery scaffold from before the rebuild — kept
+only in history, safe to delete.

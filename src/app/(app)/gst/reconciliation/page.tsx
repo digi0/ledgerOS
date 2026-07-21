@@ -3,29 +3,13 @@ import { serverAdmin } from "@/lib/supabase";
 import { DEMO_FIRM_ID } from "@/lib/constants";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { listDocuments, listClients } from "@/lib/db";
-import { inr } from "@/lib/fields";
+import { inr, num, recentMonths } from "@/lib/fields";
 import { reconcile, type ReconRow, type MatchStatus } from "@/lib/gstr2b";
 import PurchaseRegisterFilters from "@/components/PurchaseRegisterFilters";
 import Gstr2bUpload from "@/components/Gstr2bUpload";
 
 export const dynamic = "force-dynamic";
 
-function recentMonths(n = 13) {
-  const out: { value: string; label: string }[] = [];
-  const now = new Date();
-  for (let i = 0; i < n; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const label = d.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
-    out.push({ value, label });
-  }
-  return out;
-}
-
-function num(v: unknown) {
-  const n = typeof v === "number" ? v : typeof v === "string" ? parseFloat(v) : NaN;
-  return isFinite(n) ? n : 0;
-}
 
 const STATUS_LABEL: Record<MatchStatus, string> = {
   matched:         "Matched",

@@ -2,26 +2,13 @@ import Link from "next/link";
 import { FileCode } from "lucide-react";
 import { getClient, listClients, listDocuments } from "@/lib/db";
 import { isSupabaseConfigured } from "@/lib/supabase";
+import { recentMonths } from "@/lib/fields";
 import { documentsToVouchers } from "@/lib/voucher";
 import { vouchersToTallyXml, tallyMasters } from "@/lib/export/tally";
 import PurchaseRegisterFilters from "@/components/PurchaseRegisterFilters";
 import TallyExport from "@/components/TallyExport";
 
 export const dynamic = "force-dynamic";
-
-/** Last N months as YYYY-MM for the period selector. */
-function recentMonths(n = 13): { value: string; label: string }[] {
-  const out: { value: string; label: string }[] = [];
-  const now = new Date();
-  for (let i = 0; i < n; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    out.push({
-      value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
-      label: d.toLocaleDateString("en-IN", { month: "long", year: "numeric" }),
-    });
-  }
-  return out;
-}
 
 /** Filename-safe slug from a client name. */
 function slug(s: string): string {

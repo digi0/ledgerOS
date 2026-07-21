@@ -2,29 +2,14 @@ import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
 import { listDocuments, listClients } from "@/lib/db";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import { inr } from "@/lib/fields";
+import { inr, num, recentMonths } from "@/lib/fields";
 import PurchaseRegisterFilters from "@/components/PurchaseRegisterFilters";
 
 export const dynamic = "force-dynamic";
 
 /** Last N months as YYYY-MM values for the period selector. */
-function recentMonths(n = 13): { value: string; label: string }[] {
-  const out: { value: string; label: string }[] = [];
-  const now = new Date();
-  for (let i = 0; i < n; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const label = d.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
-    out.push({ value, label });
-  }
-  return out;
-}
-
-function num(v: unknown): number {
-  const n = typeof v === "number" ? v : typeof v === "string" ? parseFloat(v) : NaN;
-  return isFinite(n) ? n : 0;
-}
-
+/** Display-only: falls back to an em dash rather than null. Not lib/fields'
+ *  `str`, which returns null for callers that need to branch on absence. */
 function str(v: unknown): string {
   return typeof v === "string" && v.trim() ? v.trim() : "—";
 }
