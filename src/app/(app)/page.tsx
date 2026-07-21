@@ -373,13 +373,6 @@ export default async function Dashboard() {
             GST returns ingested · parsed from your uploads
           </p>
         </div>
-        <div className="card p-5">
-          <h3 className="font-display text-[15px]">Revenue Pulse</h3>
-          <p className="mt-3 rounded-lg bg-[var(--color-surface-2)] p-4 text-[12px] leading-relaxed text-[var(--color-fg-muted)]">
-            Not wired yet — revenue tracking arrives with the firm module. Nothing shown here
-            until it&apos;s real.
-          </p>
-        </div>
         <div className="card space-y-3 p-5">
           <h3 className="font-display text-[15px]">AI Copilot</h3>
           {counts.new > 0 && (

@@ -186,7 +186,7 @@ export default async function TdsRegisterPage({
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-[12px] font-medium text-[var(--color-fg-muted)]">
-            <Link href="/tds" className="hover:underline">TDS</Link>
+            <Link href="/tds/register" className="hover:underline">TDS</Link>
             {" / "}Register
           </p>
           <h1 className="font-display text-2xl">TDS Register</h1>
