@@ -1,8 +1,12 @@
 // Shared helpers for the dev DB/storage scripts. No deps beyond node + pg.
 import { readFileSync } from "node:fs";
 
-/** Minimal .env.local loader (handles quoted/unquoted values). */
+/**
+ * Minimal .env.local loader (handles quoted/unquoted values).
+ * @returns {Record<string, string>}
+ */
 export function loadEnv(path = ".env.local") {
+  /** @type {Record<string, string>} */
   const out = {};
   for (const line of readFileSync(path, "utf8").split("\n")) {
     const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/);
