@@ -2,11 +2,16 @@
 
 The operating system for modern CA practices.
 
-A CA firm's morning is sorting: mail into folders, PDFs into clients, numbers
-into Tally, deadlines into memory. LedgerOS does the sorting. A firm's
-workflow is one line — **documents in → matched to a client → reconciled →
-filed** — and the product is that line made real, with deterministic parsing
-and the export formats the Indian compliance stack actually takes.
+A CA firm's clients send their financial lives in fragments — invoices over
+email, bank statements over WhatsApp, challans by hand — and the firm's
+morning is sorting it all before the real work starts. LedgerOS captures
+every fragment into one sorted workspace, preps everything a filing needs,
+and keeps the firm's clients connected to the firm.
+
+**LedgerOS does not file taxes.** It preps everything a CA needs to file —
+reconciled registers, portal-ready GSTR-1 JSON, Tally XML — and the CA files.
+The workflow is one line: **documents in → matched to a client → reconciled →
+prepped for filing.**
 
 ## What it does
 
@@ -36,6 +41,9 @@ to a document or a rule.
 
 **Both sides of the invoice.** A separate business portal lets a firm's
 client raise its own invoices, which land directly in the firm's books.
+An invoice born structured needs no parsing — GSTR-1 becomes a direct
+projection of ledger rows. The parser is the migration path for data that
+still arrives as paper; the portal is where that path ends.
 
 **Copilot.** Claude, grounded in the firm's parsed documents. It answers
 questions about your data; it never produces the numbers.
@@ -114,14 +122,28 @@ npx tsx scripts/test-gstr1-bridge.ts # document → GSTR-1 bridge
 npx tsx scripts/test-tally.ts        # Tally XML
 ```
 
+## Where it's going
+
+Intake should meet clients where they already are. On the roadmap, not yet
+built:
+
+- **Email scraper** — client mail ingested automatically; today documents
+  arrive by manual upload.
+- **WhatsApp agent** — converses with the firm's clients and intakes
+  documents over WhatsApp, where Indian business paperwork actually moves.
+- **Client dashboard access** — the business portal grows from invoicing
+  into a client's window on its own status and filings.
+- **CRM for the firm** — the client relationship (who's pending what, who
+  was told what) managed in the same place as the work.
+
+The intent doc is [GOALS.md](GOALS.md).
+
 ## Status
 
-Live: document ingestion + parsing, client matching, purchase register,
-GSTR-2B and Form 26AS reconciliation, TDS register, Tally export, GSTR-1
-generation, invoicing (both sides), compliance calendar, AI copilot.
-
-Not yet built: email-forwarding ingestion — documents arrive by upload today.
-The roadmap lives in [GOALS.md](GOALS.md).
+Live: document ingestion (upload) + deterministic parsing, client matching,
+purchase register, GSTR-2B and Form 26AS reconciliation, TDS register, Tally
+export, GSTR-1 generation, invoicing (both sides), compliance calendar, AI
+copilot, per-firm auth with RLS.
 
 The pre-rebuild FastAPI/Celery prototype (`legacy/`) was removed in `84e3317`;
 it lives on in git history.

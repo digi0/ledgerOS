@@ -13,15 +13,19 @@
 
 ## What LedgerOS is
 
-LedgerOS turns a CA firm's document pile into filed compliance. Documents in →
-matched to a client → reconciled → filed: deterministic parsing (no LLM in the
-extraction path), a workbench that is one client × one period, GSTR-2B / 26AS
-reconciliation, and the outputs the Indian stack actually takes (GSTR-1 JSON,
-Tally XML). Ambiguity surfaces as review items instead of wrong returns; the
-copilot answers from the firm's data but never produces the numbers.
+LedgerOS is the operating system a CA firm runs its practice on: every piece
+of a client's financial life, arriving on any channel, sorted into one
+workspace and prepped for filing — **LedgerOS does not file taxes; it makes
+the CA filing-ready** — while keeping the firm's clients happy, connected,
+and visible. Deterministic parsing (no LLM near a number), a workbench that
+is one client × one month, GSTR-2B / 26AS recon, and the outputs the Indian
+stack takes (GSTR-1 JSON, Tally XML). Documents are the legacy input the
+product works to make unnecessary: data born structured at the source (portal
+invoices today) needs no parser at all.
 
 The [README](README.md) depicts the product as it exists. This file holds the
-intent — where it's going and why.
+intent — where it's going and why. `CLAUDE.md` gives any agent session the
+same grounding.
 
 ---
 
@@ -42,21 +46,24 @@ What did **not** happen: anything pilot-shaped. No CA has used it.
 
 ## This window: keep building
 
-Priorities, in order — drawn from what the repo itself says is missing.
-**Raghav: edit this list; it's a proposal, not a decision.**
+The roadmap (set by Raghav, 2026-07-22) — intake meets clients where they
+already are, and the relationship lives next to the work:
 
-1. **Email ingestion.** The pilot story is "forward your client emails,
-   morning inbox is sorted" — but today documents only arrive by manual
-   upload. Gmail forwarding-address ingestion is the missing spine of the
-   original pitch.
-2. **Privacy answer for CAs.** Data lives in Supabase and reaches Anthropic
-   via the copilot. The old "your data stays local" pitch is dead; nothing
-   replaced it. One page, decided, before any pilot conversation.
-3. **Knowledge backbone.** GST rules / TDS rates / ICAI notifications feeding
-   copilot grounding. Never started. Scope question below still open.
-4. **Parser handoff seam.** The deterministic parser is built and tested
-   in-repo (`src/lib/parser/`). If Anmol's lane is still open, the split into
-   a swappable package is unstarted; decide whether it still matters.
+1. **Email scraper.** Client mail ingested automatically into the inbox;
+   today documents arrive by manual upload only.
+2. **WhatsApp agent.** Converses with the firm's clients and intakes
+   documents over WhatsApp — where Indian business paperwork actually moves.
+3. **Client dashboard access.** The business portal grows from invoicing
+   into a client's window on its own status and filings.
+4. **CRM for the firm.** Who's pending what, who was told what — the client
+   relationship managed inside LedgerOS.
+5. **Privacy answer for CAs.** Data lives in Supabase and reaches Anthropic
+   via the copilot — and the WhatsApp agent will raise the stakes. One page,
+   decided, before any pilot conversation.
+
+Carried, lower priority: knowledge backbone (GST rules / TDS rates feeding
+copilot grounding — scope question below), parser handoff seam (swappable
+package split, if Anmol's lane is still open).
 
 Chore debt, not goals: 9 lint errors on `main` (7× the new
 `set-state-in-effect` rule, one unescaped entity, one dep-array shape).
