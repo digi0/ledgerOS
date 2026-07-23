@@ -89,5 +89,5 @@ Live: document ingestion + parsing, client matching, purchase register, GSTR-2B
 and Form 26AS reconciliation, TDS register, Tally export, GSTR-1 generation,
 invoicing (both sides), compliance calendar, AI copilot.
 
-`legacy/` is a superseded FastAPI/Celery scaffold from before the rebuild — kept
-only in history, safe to delete.
+The pre-rebuild FastAPI/Celery prototype (`legacy/`) was removed in `84e3317`;
+it lives on in git history.
