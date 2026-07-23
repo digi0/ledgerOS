@@ -11,6 +11,20 @@
 
 ---
 
+## What LedgerOS is
+
+LedgerOS turns a CA firm's document pile into filed compliance. Documents in →
+matched to a client → reconciled → filed: deterministic parsing (no LLM in the
+extraction path), a workbench that is one client × one period, GSTR-2B / 26AS
+reconciliation, and the outputs the Indian stack actually takes (GSTR-1 JSON,
+Tally XML). Ambiguity surfaces as review items instead of wrong returns; the
+copilot answers from the firm's data but never produces the numbers.
+
+The [README](README.md) depicts the product as it exists. This file holds the
+intent — where it's going and why.
+
+---
+
 ## Where the last window landed (2026-05-23 → 2026-07-31, closed early)
 
 The MVP goal was met and overshot. Live in production (Vercel, deploys from

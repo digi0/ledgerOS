@@ -50,7 +50,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: SP
         <div>
           <h1 className="font-display text-2xl">Documents</h1>
           <p className="mt-1 text-[var(--color-fg-muted)]">
-            AI-classified inbox · {counts.new} unprocessed
+            Auto-classified inbox · {counts.new} unprocessed
           </p>
         </div>
         <UploadDocument />
