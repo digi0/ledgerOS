@@ -2,13 +2,9 @@
 
 > Tactical goal doc for this repo. Strategic, cross-project view is in
 > `~/Documents/Projects/hub/goals.md`. If they disagree, the hub doc is intent
-> — update this one to match.
->
-> ⚠️ The hub doc still reflects the pre-pivot local-first plan (local infra,
-> Ollama cost options). The 2026-06-03 pivot to Next.js + Supabase + Vercel was
-> never confirmed there. Sync it before the next planning pass.
+> — update this one to match. (Synced 2026-07-22: pivot confirmed there.)
 
-**Window:** 2026-07-22 → TBD (set after hub sync)
+**Window:** 2026-07-22 → 2026-08-31 (default — move it if the hub arbitration says otherwise)
 **Priority:** P0 (slower fuse than vedAI)
 **Phase:** post-MVP build — MVP shipped, pilot not started
 **Last reviewed:** 2026-07-22
@@ -70,8 +66,8 @@ Chore debt, not goals: 9 lint errors on `main` (7× the new
 - **Knowledge backbone scope:** which sources (GST portal alone is
   non-trivial), refresh cadence, Postgres full-text vs. vector store — and is
   the pilot blocked without it, or can the copilot stay inbox-only?
-- **Hub sync:** confirm the stack pivot in the hub doc and set this window's
-  end date there.
+- ~~**Hub sync**~~ — done 2026-07-22: pivot confirmed in the hub doc, window
+  end set to 2026-08-31 (both marked as defaults Raghav can move).
 
 ## Pointers
 
