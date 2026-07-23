@@ -23,6 +23,9 @@ export async function signUp(_prev: AuthResult, formData: FormData): Promise<Aut
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const fullName = String(formData.get("fullName") ?? "").trim() || email.split("@")[0];
+  // Firm/practice name — the handle_new_user() trigger creates a fresh firm per
+  // signup (owner) from this. Blank ⇒ the trigger uses "<name>'s Practice".
+  const firmName = String(formData.get("firmName") ?? "").trim();
 
   const invalid = validate(email, password);
   if (invalid) return { error: invalid };
@@ -31,7 +34,7 @@ export async function signUp(_prev: AuthResult, formData: FormData): Promise<Aut
   const { data, error } = await sb.auth.signUp({
     email,
     password,
-    options: { data: { full_name: fullName } },
+    options: { data: { full_name: fullName, firm_name: firmName } },
   });
   if (error) return { error: error.message };
 

@@ -38,7 +38,12 @@ async function mutationClient() {
 
 async function firmId(): Promise<string> {
   const authEnabled = process.env.NEXT_PUBLIC_AUTH_ENABLED === "true";
-  return (authEnabled ? await currentFirmId() : null) ?? DEMO_FIRM_ID;
+  if (authEnabled) {
+    const id = await currentFirmId();
+    if (!id) throw new Error("Not signed in to a firm — sign in to continue.");
+    return id;
+  }
+  return DEMO_FIRM_ID;
 }
 
 export interface ClientInput {

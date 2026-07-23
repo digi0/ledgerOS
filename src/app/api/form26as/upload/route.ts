@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { serverAdmin } from "@/lib/supabase";
+import { serverAdmin, currentFirmId } from "@/lib/supabase";
 import { DEMO_FIRM_ID } from "@/lib/constants";
 import { parseForm26asText, parseForm26asJson } from "@/lib/form26as";
 
@@ -45,8 +45,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const sb     = serverAdmin();
-    const firmId = process.env.NEXT_PUBLIC_AUTH_ENABLED === "true" ? null : DEMO_FIRM_ID;
+    const firmId = process.env.NEXT_PUBLIC_AUTH_ENABLED === "true" ? await currentFirmId() : DEMO_FIRM_ID;
+    if (!firmId) {
+      return NextResponse.json({ error: "Not signed in to a firm." }, { status: 401 });
+    }
+    const sb = serverAdmin();
 
     // Delete existing entries for this client + FY (idempotent re-upload)
     await sb

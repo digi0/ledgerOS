@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { serverAdmin } from "@/lib/supabase";
+import { currentFirmId } from "@/lib/supabase";
 import { DEMO_FIRM_ID } from "@/lib/constants";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import { listDocuments, listClients } from "@/lib/db";
+import { listDocuments, listClients, readClient } from "@/lib/db";
 import { inr, num, recentMonths } from "@/lib/fields";
 import { reconcile, type ReconRow, type MatchStatus } from "@/lib/gstr2b";
 import PurchaseRegisterFilters from "@/components/PurchaseRegisterFilters";
@@ -57,13 +57,14 @@ export default async function ReconciliationPage({
       : Promise.resolve([]),
   ]);
 
-  // Fetch GSTR-2B entries from DB
-  const sb = serverAdmin();
-  const { data: twoBRows } = clientId && period
+  // Fetch GSTR-2B entries — RLS-scoped when auth is on; demo firm otherwise.
+  const sb = await readClient();
+  const firmId = process.env.NEXT_PUBLIC_AUTH_ENABLED === "true" ? await currentFirmId() : DEMO_FIRM_ID;
+  const { data: twoBRows } = clientId && period && firmId
     ? await sb
         .from("gstr2b_entry")
         .select("*")
-        .eq("firm_id", DEMO_FIRM_ID)
+        .eq("firm_id", firmId)
         .eq("client_id", clientId)
         .eq("period", period)
     : { data: [] };
