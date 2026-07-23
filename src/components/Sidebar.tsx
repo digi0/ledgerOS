@@ -38,7 +38,7 @@ export default function Sidebar({
           <span className="leading-tight">
             <span className="block font-display text-[15px] text-[var(--color-ink)]">LedgerOS</span>
             <span className="block text-[10px] font-medium uppercase tracking-wider text-[var(--color-fg-dim)]">
-              by Precedal
+              for CA practices
             </span>
           </span>
         </Link>

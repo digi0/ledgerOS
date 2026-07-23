@@ -1,6 +1,6 @@
 # LedgerOS
 
-The operating system for modern CA practices — by Precedal.
+The operating system for modern CA practices.
 
 A CA firm's morning is sorting: mail into folders, PDFs into clients, numbers
 into Tally, deadlines into memory. LedgerOS does the sorting. A firm's

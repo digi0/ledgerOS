@@ -12,7 +12,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "LedgerOS — The Operating System for Modern CA Practices",
   description:
-    "LedgerOS by Precedal — unified compliance, reconciliation, and advisory workbench for Chartered Accountants.",
+    "LedgerOS — unified compliance, reconciliation, and advisory workbench for Chartered Accountants.",
   applicationName: "LedgerOS",
 };
 

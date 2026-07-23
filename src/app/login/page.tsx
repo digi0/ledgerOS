@@ -37,7 +37,7 @@ export function AuthShell({
           <AuthForm mode={mode} next={next} />
         </div>
         <p className="mt-4 text-center text-[11px] text-[var(--color-fg-dim)]">
-          LedgerOS by Precedal · for modern CA practices
+          LedgerOS · for modern CA practices
         </p>
       </div>
     </div>

@@ -14,7 +14,7 @@ Chartered Accountant sees every client's documents, compliance deadlines, and
 filings, and acts on them, instead of juggling a shoebox of PDFs, Tally, WhatsApp,
 and the GST portal.
 
-By **Precedal**. CA-first.
+CA-first.
 
 ## 2. The problem (say this to set up the pitch)
 
