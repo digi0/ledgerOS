@@ -4,6 +4,9 @@ import CopilotFab from "@/components/CopilotFab";
 import { getMe, inboxCounts, listClients, listDocuments } from "@/lib/db";
 import { computeCompliance } from "@/lib/compliance";
 
+// The layout itself hits the DB, so every (app) page is request-time rendered.
+export const dynamic = "force-dynamic";
+
 export default async function AppLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const [counts, me, clients, gstReturns] = await Promise.all([
     inboxCounts(),

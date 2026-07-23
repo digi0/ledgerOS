@@ -25,6 +25,35 @@ export function fmtDate(s: unknown): string | null {
   return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 }
 
+/** "March 2026" from a "2026-03" period key. */
+export function monthLabel(period: string): string {
+  const [y, m] = period.split("-").map(Number);
+  if (!y || !m) return period;
+  return new Date(y, m - 1, 1).toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+}
+
+/** Last N months as { value: "2026-03", label: "March 2026" }, newest first.
+ *  One copy — this used to be pasted into four period selectors. */
+export function recentMonths(n = 13): { value: string; label: string }[] {
+  const now = new Date();
+  return Array.from({ length: n }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    return { value, label: monthLabel(value) };
+  });
+}
+
+/** Coerce an untyped extracted-field value. One copy each — these were
+ *  redeclared in seven and four files respectively. */
+export function num(v: unknown): number {
+  const n = typeof v === "number" ? v : typeof v === "string" ? parseFloat(v) : NaN;
+  return isFinite(n) ? n : 0;
+}
+
+export function str(v: unknown): string | null {
+  return typeof v === "string" && v.trim() ? v.trim() : null;
+}
+
 /** "2 hours ago" style relative time for the source column. */
 export function timeAgo(s: string): string {
   const then = new Date(s).getTime();

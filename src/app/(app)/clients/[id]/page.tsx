@@ -6,7 +6,7 @@ import { enterAsBusiness } from "@/lib/business-actions";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { computeCompliance, daysUntil, type Deadline } from "@/lib/compliance";
 import { CLIENT_SERVICES, type ClientService, CLASSIFICATION_LABELS } from "@/lib/types";
-import { classificationBadge, fmtDate, inr } from "@/lib/fields";
+import { classificationBadge, fmtDate, inr, recentMonths, str } from "@/lib/fields";
 import ClientRowActions from "@/components/ClientRowActions";
 
 export const dynamic = "force-dynamic";
@@ -22,11 +22,19 @@ export default async function ClientWorkspace({ params }: { params: Promise<{ id
   const client = await getClient(id);
   if (!client) notFound();
 
-  const [recentDocs, gstReturnDocs, invoices] = await Promise.all([
-    listDocuments({ clientId: id, limit: 8 }),
+  const [allDocs, gstReturnDocs, invoices] = await Promise.all([
+    listDocuments({ clientId: id, limit: 500 }),
     listDocuments({ classification: "gst_return", clientId: id, limit: 100 }),
     listInvoices(id),
   ]);
+  const recentDocs = allDocs.slice(0, 8);
+
+  // Documents per month, for the period strip.
+  const docsByPeriod = new Map<string, number>();
+  for (const d of allDocs) {
+    const key = (str(d.extracted_fields.date) ?? d.created_at).slice(0, 7);
+    docsByPeriod.set(key, (docsByPeriod.get(key) ?? 0) + 1);
+  }
 
   const deadlines = computeCompliance({
     clients: client.gstin ? [{ id: client.id, name: client.name, gstin: client.gstin }] : [],
@@ -98,6 +106,33 @@ export default async function ClientWorkspace({ params }: { params: Promise<{ id
           </button>
         </form>
       </div>
+
+      {/* Months — the unit of work. Registers, recons and exports live inside
+          one of these, not in the nav. */}
+      <section>
+        <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-fg-dim)]">
+          Months
+        </h2>
+        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+          {recentMonths(12).map((m) => {
+            const count = docsByPeriod.get(m.value) ?? 0;
+            return (
+              <Link
+                key={m.value}
+                href={`/clients/${id}/${m.value}`}
+                className="card shrink-0 px-4 py-3 text-left hover:bg-[var(--color-surface-2)]"
+              >
+                <p className="whitespace-nowrap text-[13px] font-medium text-[var(--color-ink)]">
+                  {m.label}
+                </p>
+                <p className="mt-0.5 text-[11px] text-[var(--color-fg-dim)]">
+                  {count === 0 ? "—" : `${count} document${count === 1 ? "" : "s"}`}
+                </p>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
 
       {/* Compliance timeline — the spine: what's due, with the action to do it */}
       <section>

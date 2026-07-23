@@ -2,6 +2,7 @@ import Link from "next/link";
 import { FileJson } from "lucide-react";
 import { getClient, listClients, listDocuments, listInvoicesWithLines } from "@/lib/db";
 import { isSupabaseConfigured } from "@/lib/supabase";
+import { recentMonths } from "@/lib/fields";
 import { buildClientGstr1 } from "@/lib/export/gstr1-bridge";
 import { summarise } from "@/lib/export/gstr1";
 import { invoicesToGstr1Lines } from "@/lib/invoice";
@@ -9,20 +10,6 @@ import PurchaseRegisterFilters from "@/components/PurchaseRegisterFilters";
 import Gstr1Review from "@/components/Gstr1Review";
 
 export const dynamic = "force-dynamic";
-
-/** Last N months as YYYY-MM for the period selector. */
-function recentMonths(n = 13): { value: string; label: string }[] {
-  const out: { value: string; label: string }[] = [];
-  const now = new Date();
-  for (let i = 0; i < n; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    out.push({
-      value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
-      label: d.toLocaleDateString("en-IN", { month: "long", year: "numeric" }),
-    });
-  }
-  return out;
-}
 
 /**
  * GSTR-1 export. Pick a client + month → LedgerOS turns their parsed OUTWARD

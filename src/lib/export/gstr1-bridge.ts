@@ -56,6 +56,22 @@ export function documentToGstr1Line(doc: DocumentRow, clientGstin: string): Brid
   if (seller) all.add(seller);
 
   if (!all.has(client)) return skip("client GSTIN not on invoice — can't confirm an outward supply");
+
+  // Seller/buyer roles come from the invoice's own labels. When the layout
+  // carried none, the parser guessed from text order — and a wrong guess here
+  // files a purchase as a sale. Refuse and let a human confirm instead.
+  if (f._party_roles_confident === false && all.size > 1) {
+    return skip("buyer/seller roles unclear on this invoice — open it and confirm the parties");
+  }
+  // GSTR-1 keys every line on invoice number + date. A wrong one is a filing
+  // error the portal will happily accept, so refuse rather than guess.
+  if (f._invoice_number_confident === false) {
+    return skip("invoice number ambiguous — open it and confirm which number is the invoice's own");
+  }
+  if (f._date_confident === false) {
+    return skip("invoice date ambiguous — open it and confirm the invoice date");
+  }
+
   if (seller && seller !== client) return skip("inward (purchase) invoice — client is the buyer");
   if (!seller) return skip("no seller GSTIN parsed — can't confirm the client is the supplier");
 

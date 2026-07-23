@@ -8,7 +8,9 @@
  */
 
 import { revalidatePath } from "next/cache";
+import { parsePdf } from "@/lib/parser";
 import { serverAdmin, supabaseServer } from "./supabase";
+import { reparsePatch, type ReparseOutcome } from "./reparse";
 import type { DocumentClassification, HandlingStatus } from "./types";
 
 async function mutationClient() {
@@ -71,6 +73,50 @@ export async function reclassify(id: string, classification: DocumentClassificat
   refresh(id);
 }
 
+/**
+ * Re-run the parser over one already-stored document. Preserves the client
+ * assignment, the handling state, and every field a human edited by hand —
+ * see lib/reparse.ts for why each of those is off-limits.
+ */
+export async function reparseDocument(id: string): Promise<ReparseOutcome> {
+  const fail = (error: string): ReparseOutcome => ({ id, ok: false, changed: [], preserved: [], error });
+  const sb = await mutationClient();
+
+  const { data: doc } = await sb
+    .from("document")
+    .select("storage_path, extracted_fields")
+    .eq("id", id)
+    .maybeSingle();
+  if (!doc) return fail("Document not found.");
+  if (!doc.storage_path) return fail("No stored file to re-parse.");
+
+  const file = await serverAdmin().storage.from("documents").download(doc.storage_path);
+  if (file.error || !file.data) return fail(`Storage: ${file.error?.message ?? "download failed"}`);
+
+  let parsed;
+  try {
+    parsed = await parsePdf(new Uint8Array(await file.data.arrayBuffer()));
+  } catch {
+    return fail("Could not read this PDF — left unchanged.");
+  }
+
+  const previous = (doc.extracted_fields ?? {}) as Record<string, unknown>;
+  const patch = reparsePatch(previous, parsed);
+
+  const { error } = await sb
+    .from("document")
+    .update({
+      extracted_fields: patch.extracted_fields,
+      classification_confidence: patch.classification_confidence,
+      ocr_text: parsed.rawText.slice(0, 50000),
+    })
+    .eq("id", id);
+  if (error) return fail(error.message);
+
+  refresh(id);
+  return { id, ok: true, changed: patch.changed, preserved: patch.preserved };
+}
+
 /** Remove the stored PDF and the row. Caller navigates back to the inbox. */
 export async function deleteDocument(id: string): Promise<{ ok: boolean; error?: string }> {
   const sb = await mutationClient();
@@ -115,6 +161,7 @@ export async function setExtractedField(
   const fields = { ...(doc.extracted_fields as Record<string, unknown>) };
   const v = value.trim();
   fields[k] = /^-?\d+(\.\d+)?$/.test(v) ? Number(v) : v;
+  fields._edited = markEdited(fields, k);
 
   const { error } = await sb.from("document").update({ extracted_fields: fields }).eq("id", id);
   if (error) return { ok: false, error: error.message };
@@ -136,9 +183,19 @@ export async function removeExtractedField(
 
   const fields = { ...(doc.extracted_fields as Record<string, unknown>) };
   delete fields[key];
+  // Recorded even though the key is gone: a re-parse must not resurrect a
+  // field the CA deliberately deleted.
+  fields._edited = markEdited(fields, key);
 
   const { error } = await sb.from("document").update({ extracted_fields: fields }).eq("id", id);
   if (error) return { ok: false, error: error.message };
   refresh(id);
   return { ok: true };
+}
+
+/** Append a key to the manual-override ledger. `_edited` is what stops a
+ *  re-parse from overwriting a value a human corrected by hand. */
+function markEdited(fields: Record<string, unknown>, key: string): string[] {
+  const prev = Array.isArray(fields._edited) ? (fields._edited as string[]) : [];
+  return prev.includes(key) ? prev : [...prev, key];
 }

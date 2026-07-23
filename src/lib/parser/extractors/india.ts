@@ -27,6 +27,110 @@ export function panFromGstin(gstin: string): string | null {
   return /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]/.test(gstin) ? gstin.slice(2, 12) : null;
 }
 
+// ---- Invoice parties (who is the seller, who is the buyer) --------------
+/**
+ * Role assignment must come from the document's own labels, never from text
+ * order: pdf.js emits text in DRAW order, not visual order, so a two-column
+ * header can put the "Bill To" block ahead of the seller's letterhead. Taking
+ * gstins[0] as the seller silently swaps the parties on those layouts, which
+ * flips a sale into a purchase in the GSTR-1 bridge.
+ */
+const BUYER_MARKER =
+  String.raw`bill(?:ed)?\s*to|buyer|consignee|ship(?:ped)?\s*to|recipient|customer|party\s*(?:name|details)`;
+const SELLER_MARKER = String.raw`sold\s*by|seller|supplier|service\s*provider|from`;
+
+/** How far after a "Bill To" label its own GSTIN can sit. Blocks are compact;
+ *  a wider window starts swallowing the seller's GSTIN further down the page. */
+const BLOCK_SPAN = 250;
+
+export interface InvoiceParties {
+  seller: { gstin: string | null; name: string | null };
+  buyer: { gstin: string | null; name: string | null };
+  /**
+   * false ⇒ the document carried no usable role labels and the split fell back
+   * to text order. Callers that file a return or post a ledger entry MUST
+   * refuse rather than trust an unconfident split.
+   */
+  confident: boolean;
+}
+
+/** Split an invoice's parties by label, not by position. */
+export function splitParties(text: string): InvoiceParties {
+  const up = text.toUpperCase();
+  const gstins = [...up.matchAll(new RegExp(GSTIN_RE.source, "g"))].map((m) => ({
+    gstin: m[0],
+    index: m.index ?? 0,
+  }));
+  const buyerMarks = marks(text, BUYER_MARKER);
+  const sellerMarks = marks(text, SELLER_MARKER);
+
+  // Buyer = the first GSTIN sitting inside a "Bill To"-style block. A tax
+  // invoice must carry the supplier's GSTIN; the recipient's is optional
+  // (B2C), so a lone GSTIN is the seller's — no guesswork needed.
+  const buyerHit =
+    gstins.length > 1
+      ? gstins.find((g) => buyerMarks.some((mk) => g.index >= mk.end && g.index - mk.end < BLOCK_SPAN))
+      : undefined;
+
+  // The region the buyer's details occupy — excluded when hunting for the
+  // seller's name, so a leading "Bill To" block can't supply it.
+  const buyerBlock: Span | null = buyerMarks[0]
+    ? [buyerMarks[0].index, buyerHit ? buyerHit.index + 15 : buyerMarks[0].end + 120]
+    : null;
+
+  const seller = {
+    gstin: buyerHit
+      ? gstins.find((g) => g.gstin !== buyerHit.gstin)?.gstin ?? null
+      : gstins[0]?.gstin ?? null,
+    name: sellerName(text, sellerMarks[0], buyerBlock),
+  };
+  const buyer = {
+    gstin: buyerHit?.gstin ?? (gstins.length > 1 && !buyerHit ? gstins[1].gstin : null),
+    name: nameAfter(text, buyerMarks[0]),
+  };
+
+  // Confident when a label tied a GSTIN to a role, or when there is only one
+  // GSTIN (which the invoice rules say is the supplier's). Otherwise we fell
+  // back to text order — say so; that is the case that files a wrong return.
+  return { seller, buyer, confident: gstins.length <= 1 || Boolean(buyerHit) };
+}
+
+type Span = [start: number, end: number];
+
+type Mark = { index: number; end: number };
+
+function marks(text: string, source: string): Mark[] {
+  return [...text.matchAll(new RegExp(source, "gi"))]
+    .filter((m) => m.index != null)
+    .map((m) => ({ index: m.index!, end: m.index! + m[0].length }));
+}
+
+/** Seller name: the block after a "Sold By" label, else the letterhead — with
+ *  the buyer's block cut out so a leading "Bill To" can't supply it. */
+function sellerName(text: string, sellerMark: Mark | undefined, buyerBlock: Span | null): string | null {
+  if (sellerMark) return nameAfter(text, sellerMark);
+  const outside = buyerBlock ? text.slice(0, buyerBlock[0]) + "\n" + text.slice(buyerBlock[1]) : text;
+  return firstNameLine(outside);
+}
+
+function nameAfter(text: string, mark: Mark | undefined): string | null {
+  return mark ? firstNameLine(text.slice(mark.end, mark.end + 160)) : null;
+}
+
+/** First line that reads like a party name — not a GSTIN, PAN, date, amount,
+ *  or a bare field label. */
+function firstNameLine(chunk: string): string | null {
+  for (const raw of chunk.split("\n")) {
+    const line = raw.replace(/^[\s:\-,]+/, "").replace(/\s+/g, " ").trim();
+    if (line.length < 3 || line.length > 80) continue;
+    if (new RegExp(`^(?:${GSTIN_RE.source}|${PAN_RE.source})$`, "i").test(line)) continue;
+    if (/^(?:gstin|pan|state|address|code|phone|email|tel)\b/i.test(line)) continue;
+    if (!/[A-Za-z]{3}/.test(line)) continue;
+    return line;
+  }
+  return null;
+}
+
 // ---- GST state codes (first 2 digits of a GSTIN) ------------------------
 export const STATE_CODES: Record<string, string> = {
   "01": "Jammu and Kashmir", "02": "Himachal Pradesh", "03": "Punjab",
@@ -127,6 +231,9 @@ export function findDate(text: string, label?: RegExp): string | null {
     const d = +m[1], mo = +m[2], y = normYear(+m[3]);
     if (d <= 31 && mo <= 12) return iso(y, mo, d);
   }
+  // 2026-04-12 (ISO — some ERPs emit this even on Indian invoices)
+  m = scope.match(/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/);
+  if (m && +m[2] <= 12 && +m[3] <= 31) return iso(+m[1], +m[2], +m[3]);
   // 12 Apr 2026 / 12 April 2026
   m = scope.match(/\b(\d{1,2})\s+([A-Za-z]{3,9})\.?,?\s+(\d{4})\b/);
   if (m && MONTHS[m[2].slice(0, 3).toLowerCase()]) {
@@ -138,6 +245,100 @@ export function findDate(text: string, label?: RegExp): string | null {
     return iso(+m[3], MONTHS[m[1].slice(0, 3).toLowerCase()], +m[2]);
   }
   return null;
+}
+
+// ---- Labelled fields (invoice number, invoice date) ---------------------
+/**
+ * Taking the first label-ish match anywhere in the text is how "Due Date" and
+ * "E-Way Bill Date" beat the real invoice date, and how "Original Invoice No"
+ * beats a credit note's own number. So: anchor every label on word boundaries,
+ * rank labels by specificity, and let the highest rank win wherever it sits.
+ */
+export interface Labelled<T> {
+  value: T | null;
+  /** false ⇒ only a vague label matched, or equally-specific labels disagreed. */
+  confident: boolean;
+}
+
+type LabelRule = { re: string; rank: number };
+
+/** Words that, immediately before a label, mean it belongs to another field. */
+const NOT_INVOICE_DATE =
+  String.raw`due|delivery|deliver|e-?way|ack(?:nowledgement)?|p\.?o\.?|purchase\s*order|order|payment|challan|receipt|valid|expiry|supply`;
+const NOT_INVOICE_NUMBER =
+  String.raw`original|ref(?:erence)?|previous|against|revised|p\.?o\.?|purchase\s*order|order|challan|e-?way|delivery|transport|vehicle|lr`;
+
+// Label internals use [ \t]* rather than \s* on purpose: \s* spans newlines,
+// which glues a "TAX INVOICE" heading to the next line's "Date:" and scores it
+// as a rank-3 "Invoice Date". A real two-word label never straddles a line.
+const DATE_LABELS: LabelRule[] = [
+  { re: String.raw`invoice[ \t]*date`, rank: 3 },
+  { re: String.raw`bill[ \t]*date`, rank: 3 },
+  { re: String.raw`\bdated\b`, rank: 2 },
+  { re: String.raw`\bdate\b`, rank: 1 },
+];
+
+const NUMBER_LABELS: LabelRule[] = [
+  { re: String.raw`tax[ \t]*invoice[ \t]*(?:no|number|#)`, rank: 4 },
+  { re: String.raw`invoice[ \t]*(?:no|number|#)`, rank: 3 },
+  { re: String.raw`bill[ \t]*(?:no|number|#)`, rank: 2 },
+  { re: String.raw`doc(?:ument)?[ \t]*(?:no|number|#)`, rank: 1 },
+];
+
+/** Value shape for an invoice number — lazy, and stops at the next label so a
+ *  flattened "No.:G/31Date:12/04" doesn't yield "G/31Date". */
+const NUMBER_VALUE = String.raw`\.?\s*:?\s*([A-Za-z0-9][A-Za-z0-9/\-]*?)(?=\s|$|[,;|]|date|dated|dt\b|gstin|hsn|qty)`;
+
+function labelHits(
+  text: string,
+  labels: LabelRule[],
+  disqualify: string,
+): { rank: number; index: number; end: number }[] {
+  const out: { rank: number; index: number; end: number }[] = [];
+  for (const { re, rank } of labels) {
+    // (?<!…) rejects "Due Date", "Original Invoice No", etc. The trailing
+    // [\s:\-]* lets the disqualifier sit a space or punctuation away.
+    const rx = new RegExp(String.raw`(?<!(?:${disqualify})[\s:\-]{0,3})(?:${re})`, "gi");
+    for (const m of text.matchAll(rx)) {
+      if (m.index != null) out.push({ rank, index: m.index, end: m.index + m[0].length });
+    }
+  }
+  return out;
+}
+
+/** Resolve one labelled field: best-ranked label wins; ties that disagree are
+ *  reported as unconfident rather than silently picking the first. */
+function resolve<T>(
+  hits: { rank: number; index: number; end: number }[],
+  read: (at: { index: number; end: number }) => T | null,
+): Labelled<T> {
+  const scored = hits
+    .map((h) => ({ ...h, value: read(h) }))
+    .filter((h): h is typeof h & { value: T } => h.value != null);
+  if (scored.length === 0) return { value: null, confident: false };
+
+  const top = Math.max(...scored.map((h) => h.rank));
+  const best = scored.filter((h) => h.rank === top).sort((a, b) => a.index - b.index);
+  const agree = best.every((h) => h.value === best[0].value);
+  // A vague label is fine when it is the only candidate; it is not fine when
+  // rivals of the same rank point somewhere else.
+  return { value: best[0].value, confident: agree && (top >= 2 || best.length === 1) };
+}
+
+export function findInvoiceDate(text: string): Labelled<string> {
+  return resolve(labelHits(text, DATE_LABELS, NOT_INVOICE_DATE), ({ end }) =>
+    findDate(text.slice(end, end + 60)),
+  );
+}
+
+export function findInvoiceNumber(text: string): Labelled<string> {
+  return resolve(labelHits(text, NUMBER_LABELS, NOT_INVOICE_NUMBER), ({ end }) => {
+    const m = new RegExp(`^${NUMBER_VALUE}`, "i").exec(text.slice(end, end + 40));
+    const v = m?.[1]?.trim();
+    // A bare date is never an invoice number — that's the two fields colliding.
+    if (!v || /^\d{1,4}[/.\-]\d{1,2}[/.\-]\d{2,4}$/.test(v)) return null;
+    return v;
+  });
 }
 
 // ---- HSN / SAC ----------------------------------------------------------

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Search, LayoutGrid, FileText, Users, BadgePercent, Landmark, Building2,
+  Search, LayoutGrid, FileText, Users, BadgePercent, Landmark,
   CalendarCheck2, Receipt, GitCompareArrows, FileJson, FileCode, Sparkles, FilePlus2, ArrowRight,
 } from "lucide-react";
 
@@ -43,8 +43,6 @@ export default function CommandPalette({
       ["/documents", "Documents", FileText],
       ["/clients", "Clients", Users],
       ["/gst", "GST", BadgePercent],
-      ["/tds", "TDS", Landmark],
-      ["/income-tax", "Income Tax", Building2],
       ["/compliance", "Compliance", CalendarCheck2],
       ["/purchase-register", "Purchase Register", Receipt],
       ["/tds/register", "TDS Register", Landmark],
